@@ -32,10 +32,9 @@ export const BUILDING_POSITIONS = {
     x: 9,
     y: 7,
     description: 'Southeast, at the dock location',
-    // Updated with improved debug coordinates
     zone: {
-      left: '5.28%',
-      top: '76.47%',
+      left: '3.22%',
+      top: '68.21%',
       width: '6%',
       height: '6%',
     },
@@ -44,10 +43,9 @@ export const BUILDING_POSITIONS = {
     x: 2,
     y: 4,
     description: 'West side, near rocks',
-    // Updated with improved debug coordinates
     zone: {
-      left: '77.38%',
-      top: '55.73%',
+      left: '71.92%',
+      top: '53.86%',
       width: '6%',
       height: '6%',
     },
@@ -56,10 +54,9 @@ export const BUILDING_POSITIONS = {
     x: 1,
     y: 2,
     description: 'Northwest, near vegetation',
-    // Positioned based on debug coordinates (bucheron) - keeping previous value
     zone: {
-      left: '50.37%',
-      top: '32.47%',
+      left: '51.19%',
+      top: '24.66%',
       width: '6%',
       height: '6%',
     },
