@@ -3,6 +3,7 @@ import { getBuildingPosition, BUILDING_POSITIONS } from '../config/islandLayout'
 import { getBuildingConfig } from '../config/buildings';
 import BuildingModal from './BuildingModal';
 import ConstructionMenu from './ConstructionMenu';
+import { debugAPI } from '../services/api';
 import './IslandView.css';
 
 export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstruction }) {
@@ -525,6 +526,57 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                   left: {desiredPosition.x}%<br/>
                   top: {desiredPosition.y}%
                 </div>
+                <button
+                  onClick={async () => {
+                    // Check if we're in production (deployed environment)
+                    const isProduction = window.location.hostname !== 'localhost' && 
+                                       window.location.hostname !== '127.0.0.1';
+                    
+                    const position = BUILDING_POSITIONS[currentPosition.buildingType];
+                    const code = `  ${currentPosition.buildingType}: {\n    x: ${position.x},\n    y: ${position.y},\n    description: '${position.description}',\n    zone: {\n      left: '${desiredPosition.x}%',\n      top: '${desiredPosition.y}%',\n      width: '${position.zone.width}',\n      height: '${position.zone.height}',\n    },\n  },`;
+                    
+                    if (isProduction) {
+                      // In production, copy to clipboard
+                      navigator.clipboard.writeText(code).then(() => {
+                        alert('✅ Code copié dans le presse-papier !\n\n📝 Étapes :\n1. Ouvrez src/config/islandLayout.js\n2. Trouvez la section ' + currentPosition.buildingType + '\n3. Collez le code copié\n4. Poussez sur Git');
+                      });
+                      return;
+                    }
+                    
+                    // Try direct save in development
+                    try {
+                      await debugAPI.updateBuildingPosition(
+                        currentPosition.buildingType,
+                        `${desiredPosition.x}%`,
+                        `${desiredPosition.y}%`
+                      );
+                      alert(`✅ Position sauvegardée pour ${currentPosition.buildingType} !\nRechargez la page pour voir les changements.`);
+                      // Reset positions after saving
+                      setCurrentPosition(null);
+                      setDesiredPosition(null);
+                    } catch (error) {
+                      console.error('Erreur lors de la sauvegarde:', error);
+                      // Fallback: copy to clipboard
+                      navigator.clipboard.writeText(code).then(() => {
+                        alert(`❌ Erreur de sauvegarde: ${error.message}\n\n✅ Code copié dans le presse-papier.\nAssurez-vous que le backend est démarré (cd backend && npm run dev)`);
+                      });
+                    }
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    padding: '6px 12px',
+                    background: '#4CAF50',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    width: '100%'
+                  }}
+                >
+                  💾 Sauvegarder
+                </button>
               </div>
             </div>
           )}
