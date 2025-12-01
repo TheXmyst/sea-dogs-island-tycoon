@@ -229,3 +229,15 @@ export const allianceAPI = {
   },
 };
 
+/**
+ * Debug API - Update building positions
+ */
+export const debugAPI = {
+  async updateBuildingPosition(buildingType, left, top) {
+    return apiRequest('/api/debug/update-building-position', {
+      method: 'POST',
+      body: JSON.stringify({ buildingType, left, top }),
+    });
+  },
+};
+

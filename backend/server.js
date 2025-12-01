@@ -1280,6 +1280,81 @@ app.post('/api/gacha/pull', async (req, res) => {
   }
 });
 
+// Debug route: Update building position in islandLayout.js
+app.post('/api/debug/update-building-position', async (req, res) => {
+  try {
+    const { buildingType, left, top } = req.body;
+    
+    if (!buildingType || left === undefined || top === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields: buildingType, left, top' 
+      });
+    }
+    
+    // Import fs and path
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const { dirname } = await import('path');
+    
+    // Get the project root directory (go up from backend/)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const projectRoot = path.resolve(__dirname, '..');
+    const layoutFile = path.join(projectRoot, 'src', 'config', 'islandLayout.js');
+    
+    // Check if file exists
+    try {
+      await fs.access(layoutFile);
+    } catch (error) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `File not found: ${layoutFile}` 
+      });
+    }
+    
+    // Read the file
+    let fileContent = await fs.readFile(layoutFile, 'utf-8');
+    
+    // Find and replace the building position
+    // Pattern: buildingType: { ... zone: { left: '...', top: '...', ... } }
+    // More flexible pattern that handles multiline
+    const escapedBuildingType = buildingType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const buildingPattern = new RegExp(
+      `(${escapedBuildingType}:\\s*{[\\s\\S]*?zone:\\s*{[\\s\\S]*?left:\\s*')([^']+)(',[\\s\\S]*?top:\\s*')([^']+)(')`,
+      's'
+    );
+    
+    const match = fileContent.match(buildingPattern);
+    if (!match) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `Building type "${buildingType}" not found in islandLayout.js` 
+      });
+    }
+    
+    // Replace the position
+    fileContent = fileContent.replace(
+      buildingPattern,
+      `$1${left}$3${top}$5`
+    );
+    
+    // Write the file back
+    await fs.writeFile(layoutFile, fileContent, 'utf-8');
+    
+    console.log(`✅ Updated building position: ${buildingType} -> left=${left}, top=${top}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Position updated for ${buildingType}: left=${left}, top=${top}` 
+    });
+  } catch (error) {
+    console.error('Update building position error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Start server
 // Railway requires binding to 0.0.0.0, not just localhost
 // Start server after database initialization

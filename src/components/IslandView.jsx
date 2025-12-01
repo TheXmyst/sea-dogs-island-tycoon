@@ -3,6 +3,7 @@ import { getBuildingPosition, BUILDING_POSITIONS } from '../config/islandLayout'
 import { getBuildingConfig } from '../config/buildings';
 import BuildingModal from './BuildingModal';
 import ConstructionMenu from './ConstructionMenu';
+import { debugAPI } from '../services/api';
 import './IslandView.css';
 
 export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstruction }) {
@@ -616,6 +617,44 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                   top: {newTopPercent.toFixed(2)}%
                 </div>
                 <button
+                  onClick={async () => {
+                    try {
+                      await debugAPI.updateBuildingPosition(
+                        buildingType,
+                        `${newLeftPercent.toFixed(2)}%`,
+                        `${newTopPercent.toFixed(2)}%`
+                      );
+                      alert(`✅ Position sauvegardée pour ${buildingType} !\nRechargez la page pour voir les changements.`);
+                      // Reset the offset after saving
+                      setZoneOffsets(prev => {
+                        const newOffsets = { ...prev };
+                        delete newOffsets[buildingType];
+                        return newOffsets;
+                      });
+                    } catch (error) {
+                      console.error('Erreur lors de la sauvegarde:', error);
+                      // Fallback: copy to clipboard
+                      const code = `  ${buildingType}: {\n    x: ${position.x},\n    y: ${position.y},\n    description: '${position.description}',\n    zone: {\n      left: '${newLeftPercent.toFixed(2)}%',\n      top: '${newTopPercent.toFixed(2)}%',\n      width: '${position.zone.width}',\n      height: '${position.zone.height}',\n    },\n  },`;
+                      navigator.clipboard.writeText(code).then(() => {
+                        alert('❌ Erreur de sauvegarde. Code copié dans le presse-papier.\nCollez-le manuellement dans islandLayout.js');
+                      });
+                    }
+                  }}
+                  style={{
+                    marginTop: '6px',
+                    padding: '4px 8px',
+                    background: '#6495ed',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  💾 Sauvegarder
+                </button>
+                <button
                   onClick={() => {
                     const code = `  ${buildingType}: {\n    x: ${position.x},\n    y: ${position.y},\n    description: '${position.description}',\n    zone: {\n      left: '${newLeftPercent.toFixed(2)}%',\n      top: '${newTopPercent.toFixed(2)}%',\n      width: '${position.zone.width}',\n      height: '${position.zone.height}',\n    },\n  },`;
                     navigator.clipboard.writeText(code).then(() => {
@@ -624,10 +663,11 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                   }}
                   style={{
                     marginTop: '6px',
+                    marginLeft: '6px',
                     padding: '4px 8px',
-                    background: '#6495ed',
-                    color: '#fff',
-                    border: 'none',
+                    background: 'rgba(100, 150, 255, 0.3)',
+                    color: '#6495ed',
+                    border: '1px solid #6495ed',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '10px',
