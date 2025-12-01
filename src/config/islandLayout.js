@@ -21,78 +21,85 @@ export const BUILDING_POSITIONS = {
     x: 5,
     y: 2,
     description: 'Center-north, near the large tree',
-    // Zone coordinates as percentage of island image (for visual overlay) - reduced size
+    // Zone coordinates as percentage of island image (for visual overlay)
+    // Positioned near the large tree in upper-center, slightly left
     zone: {
-      left: '40%',
-      top: '15%',
-      width: '12%',
-      height: '12%',
+      left: '38%',
+      top: '18%',
+      width: '14%',
+      height: '14%',
     },
   },
   dock: {
     x: 9,
     y: 7,
     description: 'Southeast, at the dock location',
+    // Positioned at the pier and boat on the right side
     zone: {
-      left: '70%',
-      top: '60%',
-      width: '15%',
-      height: '18%',
+      left: '72%',
+      top: '55%',
+      width: '16%',
+      height: '20%',
     },
   },
   gold_mine: {
     x: 2,
     y: 4,
     description: 'West side, near rocks',
+    // Positioned on west side where rocks are scattered
     zone: {
-      left: '10%',
-      top: '35%',
-      width: '12%',
-      height: '12%',
+      left: '12%',
+      top: '38%',
+      width: '14%',
+      height: '14%',
     },
   },
   lumber_mill: {
     x: 1,
     y: 2,
     description: 'Northwest, near vegetation',
+    // Positioned in northwest area with vegetation
     zone: {
-      left: '5%',
-      top: '15%',
-      width: '12%',
-      height: '12%',
+      left: '8%',
+      top: '18%',
+      width: '14%',
+      height: '14%',
     },
   },
   quarry: {
     x: 3,
     y: 6,
     description: 'Southwest, near large rocks',
+    // Positioned near the sandy beach area with rocks (bottom-left)
     zone: {
-      left: '20%',
-      top: '55%',
-      width: '12%',
-      height: '15%',
+      left: '15%',
+      top: '68%',
+      width: '14%',
+      height: '16%',
     },
   },
   distillery: {
     x: 6,
     y: 5,
     description: 'Center, along the path',
+    // Positioned along the winding path in the center
     zone: {
-      left: '45%',
-      top: '40%',
-      width: '12%',
-      height: '12%',
+      left: '42%',
+      top: '45%',
+      width: '14%',
+      height: '14%',
     },
   },
   tavern: {
     x: 8,
     y: 3,
     description: 'Northeast, near the path',
+    // Positioned in northeast area, near where path curves
     zone: {
-      left: '65%',
-      top: '20%',
-      width: '12%',
-      height: '12%',
+      left: '62%',
+      top: '25%',
+      width: '14%',
+      height: '14%',
     },
   },
 };
