@@ -94,10 +94,10 @@ export const BUILDING_POSITIONS = {
     x: 8,
     y: 3,
     description: 'Northeast, near the path',
-    // Updated with improved debug coordinates
+    // Updated with corrected coordinates from debug
     zone: {
-      left: '38.95%',
-      top: '53.15%',
+      left: '37.5%',
+      top: '49.74%',
       width: '6%',
       height: '6%',
     },
