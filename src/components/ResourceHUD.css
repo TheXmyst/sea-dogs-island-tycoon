@@ -3,6 +3,7 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
+  padding-right: 200px; /* Make room for UserInfo on the right */
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 2px solid var(--color-gold);
@@ -51,6 +52,7 @@
 @media (max-width: 768px) {
   .resource-hud {
     padding: 8px;
+    padding-right: 120px; /* Less space for UserInfo on mobile */
     gap: 4px;
   }
   

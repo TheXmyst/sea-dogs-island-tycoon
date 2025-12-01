@@ -7,6 +7,7 @@ import { BUILDINGS, getBuildingConfig, checkPrerequisites } from './config/build
 import { SHIPS, getShipConfig } from './config/ships';
 import { authAPI, gameAPI } from './services/api';
 import ResourceHUD from './components/ResourceHUD';
+import UserInfo from './components/UserInfo';
 import IslandView from './components/IslandView';
 import ShipManager from './components/ShipManager';
 import CaptainManager from './components/CaptainManager';
@@ -1082,21 +1083,12 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>🏴‍☠️ Sea Dogs: Island Tycoon</h1>
-        <div className="header-right">
-          <div className="tick-indicator">
-            Next resource tick: {Math.ceil(nextTickTime)}s
-          </div>
-          <div className="user-info">
-            <span className="username">👤 {username}</span>
-            {isSyncing && <span className="sync-indicator">🔄</span>}
-            <button className="logout-button" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
-      </header>
-      
       <ResourceHUD resources={gameState.resources} />
+      <UserInfo 
+        username={username} 
+        isSyncing={isSyncing} 
+        onLogout={handleLogout} 
+      />
       
       {error && (
         <div className="error-banner">
