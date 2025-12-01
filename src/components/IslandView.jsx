@@ -406,6 +406,15 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         </div>
       )}
 
+      {/* Construction button - top right corner */}
+      <button
+        className="construction-floating-btn"
+        onClick={() => setShowConstructionMenu(true)}
+        title="Construire un bâtiment"
+      >
+        <span className="construction-icon">🔨</span>
+      </button>
+
       {/* Island display - fullscreen */}
       <div 
         className="island-display"

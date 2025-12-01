@@ -11,6 +11,67 @@
   overflow: hidden;
 }
 
+/* Construction button - floating in top right corner */
+.construction-floating-btn {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--color-gold);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.construction-floating-btn:hover {
+  background: rgba(20, 20, 20, 0.95);
+  border-color: #ffd700;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 16px rgba(212, 175, 55, 0.5);
+}
+
+.construction-floating-btn:active {
+  transform: scale(1.05);
+}
+
+.construction-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+@media (max-width: 768px) {
+  .construction-floating-btn {
+    top: 90px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .construction-icon {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .construction-floating-btn {
+    top: 85px;
+    right: 12px;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .construction-icon {
+    font-size: 22px;
+  }
+}
+
 /* Action buttons bar - moved to bottom, semi-transparent */
 .island-action-bar {
   display: flex;

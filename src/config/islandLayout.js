@@ -34,22 +34,22 @@ export const BUILDING_POSITIONS = {
     x: 9,
     y: 7,
     description: 'Southeast, at the dock location',
-    // Positioned at the pier and boat on the right side
+    // Positioned based on debug coordinates
     zone: {
-      left: '72%',
-      top: '55%',
-      width: '7%',
-      height: '8%',
+      left: '23.43%',
+      top: '74.35%',
+      width: '6%',
+      height: '6%',
     },
   },
   gold_mine: {
     x: 2,
     y: 4,
     description: 'West side, near rocks',
-    // Positioned on west side where rocks are scattered
+    // Positioned based on debug coordinates
     zone: {
-      left: '12%',
-      top: '38%',
+      left: '72.42%',
+      top: '55.74%',
       width: '6%',
       height: '6%',
     },
@@ -58,10 +58,10 @@ export const BUILDING_POSITIONS = {
     x: 1,
     y: 2,
     description: 'Northwest, near vegetation',
-    // Positioned in northwest area with vegetation
+    // Positioned based on debug coordinates (bucheron)
     zone: {
-      left: '8%',
-      top: '18%',
+      left: '50.37%',
+      top: '32.47%',
       width: '6%',
       height: '6%',
     },
@@ -82,10 +82,10 @@ export const BUILDING_POSITIONS = {
     x: 6,
     y: 5,
     description: 'Center, along the path',
-    // Positioned along the winding path in the center
+    // Positioned based on debug coordinates
     zone: {
-      left: '42%',
-      top: '45%',
+      left: '56.02%',
+      top: '70.11%',
       width: '6%',
       height: '6%',
     },
@@ -94,10 +94,10 @@ export const BUILDING_POSITIONS = {
     x: 8,
     y: 3,
     description: 'Northeast, near the path',
-    // Positioned in northeast area, near where path curves
+    // Positioned based on debug coordinates
     zone: {
-      left: '62%',
-      top: '25%',
+      left: '40.36%',
+      top: '55.64%',
       width: '6%',
       height: '6%',
     },
