@@ -274,6 +274,66 @@
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
 }
 
+/* Make zones more visible on mobile - always show borders */
+@media (max-width: 768px) {
+  .building-zone {
+    border: 2px dashed rgba(212, 175, 55, 0.3);
+    min-width: 50px;
+    min-height: 50px;
+  }
+
+  .building-zone.built {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--color-gold);
+    border-style: solid;
+    border-width: 3px;
+  }
+
+  .building-zone.placing {
+    background: rgba(100, 200, 100, 0.3);
+    border-color: var(--color-success);
+    border-width: 3px;
+  }
+
+  .zone-building-icon {
+    font-size: 28px;
+  }
+
+  .zone-building-level {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .zone-placement-icon {
+    font-size: 28px;
+  }
+
+  .zone-placement-text {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .building-zone {
+    min-width: 60px;
+    min-height: 60px;
+    border-width: 2px;
+  }
+
+  .building-zone.built {
+    border-width: 2px;
+  }
+
+  .zone-building-icon {
+    font-size: 24px;
+  }
+
+  .zone-placement-icon {
+    font-size: 24px;
+  }
+}
+
 @keyframes pulse-zone {
   0%, 100% {
     box-shadow: 0 0 15px rgba(100, 200, 100, 0.5);
