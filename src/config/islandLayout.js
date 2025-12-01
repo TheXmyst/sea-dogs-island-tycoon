@@ -21,11 +21,9 @@ export const BUILDING_POSITIONS = {
     x: 5,
     y: 2,
     description: 'Center-north, near the large tree',
-    // Zone coordinates as percentage of island image (for visual overlay)
-    // Updated with improved debug coordinates
     zone: {
-      left: '51.30%',
-      top: '47.47%',
+      left: '51.37%',
+      top: '44.48%',
       width: '6%',
       height: '6%',
     },
