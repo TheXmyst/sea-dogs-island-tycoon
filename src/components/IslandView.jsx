@@ -76,8 +76,23 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       // Calculate click position relative to the displayed image
       const clickX = clientX - rect.left - offsetX;
       const clickY = clientY - rect.top - offsetY;
-      const x = (clickX / displayedWidth) * 100;
-      const y = (clickY / displayedHeight) * 100;
+      
+      // Convert to percentage of displayed image
+      let x = (clickX / displayedWidth) * 100;
+      let y = (clickY / displayedHeight) * 100;
+      
+      // If capturing desired position for a zone, adjust to center the zone on the click point
+      // Zones are positioned by their top-left corner, so we need to offset by half the zone size
+      if (captureMode === 'desired' && currentPosition) {
+        const position = BUILDING_POSITIONS[currentPosition.buildingType];
+        if (position) {
+          const zoneWidthPercent = parseFloat(position.zone.width);
+          const zoneHeightPercent = parseFloat(position.zone.height);
+          // Adjust to center the zone on the click point
+          x = x - (zoneWidthPercent / 2);
+          y = y - (zoneHeightPercent / 2);
+        }
+      }
       
       return { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) };
     };
