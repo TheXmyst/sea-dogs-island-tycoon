@@ -343,10 +343,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     setIslandScale(1);
   };
 
-  // Debug mode toggle with Ctrl+Shift+E key
+  // Debug mode toggle with Ctrl+Shift+A key
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if ((e.key === 'e' || e.key === 'E') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+      if ((e.key === 'a' || e.key === 'A') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         setDebugMode(prev => !prev);
       }
     };
@@ -395,7 +395,7 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
           fontSize: '12px'
         }}>
           <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🔧 DEBUG MODE</div>
-          <div>Press Ctrl+Shift+E to toggle</div>
+          <div>Press Ctrl+Shift+A to toggle</div>
           {lastClickPos && (
             <div style={{ marginTop: '8px', color: '#fff' }}>
               Last click:<br/>
