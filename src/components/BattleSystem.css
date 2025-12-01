@@ -1,0 +1,279 @@
+.battle-system {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.battle-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.battle-header h2 {
+  color: var(--color-gold);
+  margin-bottom: 8px;
+}
+
+.battle-header p {
+  color: var(--color-text-dim);
+  margin-bottom: 12px;
+}
+
+.selected-ship-info {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.no-ship-warning {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--color-warning);
+  color: var(--color-ocean-dark);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.battle-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.battle-card {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.battle-card:hover:not(.disabled) {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.battle-card.disabled {
+  opacity: 0.6;
+}
+
+.battle-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.battle-card-header h3 {
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.battle-description {
+  color: var(--color-text-dim);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.difficulty-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.difficulty-easy {
+  background: var(--color-success);
+  color: var(--color-ocean-dark);
+}
+
+.difficulty-medium {
+  background: var(--color-warning);
+  color: var(--color-ocean-dark);
+}
+
+.difficulty-hard {
+  background: var(--color-error);
+  color: var(--color-text);
+}
+
+.battle-enemy-stats,
+.battle-rewards {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--color-ocean-deep);
+  border-radius: 6px;
+}
+
+.battle-enemy-stats h4,
+.battle-rewards h4 {
+  color: var(--color-text);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.enemy-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.rewards-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--color-ocean-medium);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.battle-button {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-error);
+  color: var(--color-text);
+  font-weight: 700;
+  border-radius: 6px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.battle-button:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+}
+
+.battle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.battle-result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-modal-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.battle-result-modal {
+  background: var(--color-card-bg);
+  border: 3px solid var(--color-gold);
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.result-header {
+  padding: 24px;
+  text-align: center;
+}
+
+.result-header.victory {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.2));
+  border-bottom: 2px solid var(--color-success);
+}
+
+.result-header.defeat {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.2));
+  border-bottom: 2px solid var(--color-error);
+}
+
+.result-header h2 {
+  font-size: 32px;
+  margin: 0;
+}
+
+.result-body {
+  padding: 24px;
+}
+
+.result-body p {
+  color: var(--color-text);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.result-rewards {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--color-ocean-deep);
+  border-radius: 8px;
+}
+
+.result-rewards h3 {
+  color: var(--color-gold);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.result-ship-damage {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--color-ocean-deep);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--color-text-dim);
+}
+
+.close-result-button {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-gold);
+  color: var(--color-ocean-dark);
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 16px;
+  margin-top: 16px;
+}
+
+.close-result-button:hover {
+  background: var(--color-gold-light);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .battle-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .enemy-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

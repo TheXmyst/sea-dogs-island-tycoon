@@ -1,0 +1,73 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Dark Ocean Theme */
+  --color-ocean-dark: #0a1a2e;
+  --color-ocean-deep: #162447;
+  --color-ocean-medium: #1f4068;
+  --color-ocean-light: #2a5a7a;
+  --color-gold: #d4af37;
+  --color-gold-light: #f4d03f;
+  --color-wood: #8b4513;
+  --color-rum: #c9a961;
+  --color-stone: #708090;
+  --color-food: #ff6b6b;
+  --color-crew: #4ecdc4;
+  --color-cannon: #95a5a6;
+  --color-text: #e8e8e8;
+  --color-text-dim: #b0b0b0;
+  --color-success: #2ecc71;
+  --color-error: #e74c3c;
+  --color-warning: #f39c12;
+  --color-border: #34495e;
+  --color-card-bg: rgba(22, 36, 71, 0.9);
+  --color-modal-bg: rgba(10, 26, 46, 0.95);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-ocean-dark);
+  color: var(--color-text);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input, select {
+  font-family: inherit;
+  background: var(--color-ocean-deep);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+input:focus, select:focus {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+

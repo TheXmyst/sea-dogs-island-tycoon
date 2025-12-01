@@ -1,0 +1,158 @@
+.navigation {
+  background: linear-gradient(135deg, rgba(20, 30, 40, 0.98) 0%, rgba(15, 25, 35, 0.98) 100%);
+  backdrop-filter: blur(10px);
+  border-top: 2px solid var(--color-gold);
+  padding: 6px 2px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 65px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.navigation::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--color-gold) 20%, 
+    var(--color-gold) 80%, 
+    transparent 100%
+  );
+}
+
+.nav-item {
+  flex: 1;
+  min-width: 55px;
+  max-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--color-text);
+  font-size: 10px;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(212, 175, 55, 0.2), 
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.nav-item:hover::before {
+  left: 100%;
+}
+
+.nav-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+  transform: translateY(-1px);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #ffd700 100%);
+  color: var(--color-ocean-dark);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+  transform: translateY(-2px);
+}
+
+.nav-icon {
+  font-size: 22px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s;
+  line-height: 1;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.15);
+}
+
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  transform: scale(1.1);
+}
+
+.nav-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    padding: 6px 1px;
+    gap: 1px;
+    height: 60px;
+  }
+  
+  .nav-item {
+    min-width: 50px;
+    max-width: 65px;
+    padding: 5px 2px;
+    gap: 1px;
+  }
+  
+  .nav-label {
+    font-size: 8px;
+    display: block;
+  }
+  
+  .nav-icon {
+    font-size: 20px;
+  }
+}
+
+/* Hide labels on very small screens, show only icons */
+@media (max-width: 480px) {
+  .nav-label {
+    display: none;
+  }
+  
+  .nav-item {
+    min-width: 45px;
+    max-width: 55px;
+    padding: 8px 4px;
+  }
+  
+  .navigation {
+    height: 55px;
+  }
+}

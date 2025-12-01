@@ -1,0 +1,458 @@
+.captain-manager {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.captain-manager-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.captain-manager-header h2 {
+  color: var(--color-gold);
+  margin-bottom: 8px;
+}
+
+.captain-manager-header p {
+  color: var(--color-text-dim);
+}
+
+.no-captains {
+  text-align: center;
+  padding: 60px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.no-captains h2 {
+  color: var(--color-gold);
+  margin-bottom: 16px;
+}
+
+.no-captains p {
+  color: var(--color-text-dim);
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.captains-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.captain-card {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.captain-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(212, 175, 55, 0.2);
+}
+
+.captain-card.selected {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.captain-card-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid;
+}
+
+.captain-portrait-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.captain-portrait {
+  font-size: 64px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ocean-deep);
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  overflow: hidden;
+}
+
+.captain-portrait-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.skin-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-gold);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 2px solid var(--color-ocean-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.captain-info {
+  flex: 1;
+}
+
+.captain-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.captain-rarity {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.captain-role {
+  font-size: 12px;
+  color: var(--color-text-dim);
+  text-transform: capitalize;
+}
+
+.captain-level {
+  margin-bottom: 16px;
+}
+
+.level-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.level-up-button {
+  padding: 4px 12px;
+  background: var(--color-success);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.level-up-button:hover {
+  background: #27ae60;
+}
+
+.xp-bar {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: var(--color-ocean-medium);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success), #2ecc71);
+  transition: width 0.3s ease;
+}
+
+.xp-bar-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.captain-buffs-preview {
+  background: var(--color-ocean-deep);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.buffs-label {
+  font-size: 12px;
+  color: var(--color-text-dim);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.buffs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.buff-preview {
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.captain-skins-count {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.captain-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-modal-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.captain-detail-content {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-gold);
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.detail-header {
+  position: relative;
+  text-align: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  color: var(--color-text);
+  font-size: 32px;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.close-button:hover {
+  background: var(--color-ocean-medium);
+}
+
+.detail-portrait {
+  font-size: 96px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.captain-portrait-image-large {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 12px;
+}
+
+.detail-header h2 {
+  color: var(--color-gold);
+  margin-bottom: 8px;
+}
+
+.detail-rarity {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detail-body {
+  padding: 24px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h3 {
+  color: var(--color-text);
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.level-display {
+  background: var(--color-ocean-deep);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.xp-bar-large {
+  position: relative;
+  width: 100%;
+  height: 28px;
+  background: var(--color-ocean-medium);
+  border-radius: 14px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.level-up-button-large {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-success);
+  color: white;
+  font-weight: 700;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+.level-up-button-large:hover {
+  background: #27ae60;
+  transform: translateY(-2px);
+}
+
+.buffs-detail {
+  background: var(--color-ocean-deep);
+  border-radius: 8px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.buff-detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--color-ocean-medium);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.buff-name {
+  color: var(--color-text-dim);
+}
+
+.buff-value {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.skins-section {
+  background: var(--color-ocean-deep);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.skins-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.skin-item {
+  background: var(--color-ocean-medium);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.skin-item:hover {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+}
+
+.skin-item.active {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.skin-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.skin-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.skin-type {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  text-transform: capitalize;
+}
+
+.skin-active-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--color-success);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.no-skins {
+  text-align: center;
+  color: var(--color-text-dim);
+  font-style: italic;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .captains-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-portrait {
+    font-size: 64px;
+  }
+}
+

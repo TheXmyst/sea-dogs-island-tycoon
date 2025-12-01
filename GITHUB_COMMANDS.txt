@@ -1,0 +1,39 @@
+===========================================
+COMMANDES POUR METTRE VOTRE JEU SUR GITHUB
+===========================================
+
+ÉTAPE 1 : Créer le repository sur GitHub
+----------------------------------------
+1. Allez sur https://github.com
+2. Cliquez sur le "+" en haut à droite
+3. Cliquez sur "New repository"
+4. Nom : sea-dogs-island-tycoon
+5. Description : "Pirate island building strategy game"
+6. Cochez "Public"
+7. NE COCHEZ PAS les autres options
+8. Cliquez sur "Create repository"
+
+ÉTAPE 2 : Copier l'URL de votre repository
+-------------------------------------------
+Sur la page GitHub, vous verrez une URL comme :
+https://github.com/VotreNom/sea-dogs-island-tycoon.git
+
+Copiez cette URL !
+
+ÉTAPE 3 : Dans PowerShell, tapez ces commandes
+----------------------------------------------
+(Remplacez VOTRE_URL par l'URL que vous avez copiée)
+
+git remote add origin VOTRE_URL
+git branch -M main
+git push -u origin main
+
+Exemple :
+git remote add origin https://github.com/TheXmyst/sea-dogs-island-tycoon.git
+git branch -M main
+git push -u origin main
+
+===========================================
+C'EST TOUT ! Votre code sera sur GitHub !
+===========================================
+

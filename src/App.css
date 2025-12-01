@@ -1,0 +1,245 @@
+.app {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-ocean-dark);
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.app-header {
+  background: rgba(20, 30, 40, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--color-border);
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 201;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.app-header h1 {
+  color: var(--color-gold);
+  font-size: 24px;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tick-indicator {
+  color: var(--color-text-dim);
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--color-ocean-deep);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.username {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.sync-indicator {
+  animation: spin 2s linear infinite;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.login-button,
+.logout-button {
+  padding: 8px 16px;
+  background: var(--color-gold);
+  color: var(--color-ocean-dark);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.login-button:hover,
+.logout-button:hover {
+  background: #d4af37;
+}
+
+.logout-button {
+  background: var(--color-ocean-deep);
+  color: var(--color-text);
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.logout-button:hover {
+  background: var(--color-ocean-darker);
+}
+
+.auth-required-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--color-ocean-dark) 0%, var(--color-ocean-darker) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.auth-required-content {
+  text-align: center;
+  color: var(--color-text);
+  padding: 40px;
+  max-width: 600px;
+}
+
+.auth-required-content h1 {
+  color: var(--color-gold);
+  font-size: 48px;
+  margin-bottom: 20px;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-message {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.sub-message {
+  font-size: 16px;
+  color: var(--color-text-dim);
+  margin-bottom: 0;
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-top: 100px; /* Space for header + resource HUD */
+  padding-bottom: 180px; /* Extra space for action buttons + navigation + scroll margin */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-behavior: smooth; /* Smooth scrolling */
+}
+
+/* Ensure all tab content can scroll to bottom */
+.app-main > * {
+  min-height: fit-content;
+  padding-bottom: 20px; /* Extra padding at bottom of each page */
+}
+
+.stub-content {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 40px;
+  text-align: center;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.stub-content h2 {
+  color: var(--color-gold);
+  margin-bottom: 16px;
+}
+
+.stub-content p {
+  color: var(--color-text-dim);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.coming-soon {
+  color: var(--color-gold-light);
+  font-weight: 600;
+  font-size: 18px;
+  margin-top: 24px;
+}
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-container > * {
+  pointer-events: auto;
+}
+
+.error-banner {
+  background: var(--color-error);
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 20px;
+  border-radius: 6px;
+}
+
+.error-banner button {
+  background: white;
+  color: var(--color-error);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 12px 16px;
+  }
+  
+  .app-header h1 {
+    font-size: 20px;
+  }
+  
+  .tick-indicator {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+

@@ -1,0 +1,254 @@
+.building-grid-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.building-panel {
+  flex: 0 0 280px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.building-panel h3 {
+  margin-bottom: 16px;
+  color: var(--color-gold);
+  font-size: 18px;
+}
+
+.building-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grid-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background: var(--color-ocean-deep);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 600px;
+}
+
+.island-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/island-background.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Hide fallback by default - only show if image fails to load */
+.island-background::before {
+  content: '';
+  position: absolute;
+  top: 5%;
+  left: 15%;
+  width: 70%;
+  height: 85%;
+  background: linear-gradient(135deg, #5a8c69 0%, #3d6a4d 30%, #2d5a3d 60%, #1e3d26 100%);
+  border-radius: 45% 35% 50% 40%;
+  box-shadow: 
+    inset 0 0 80px rgba(0, 0, 0, 0.4),
+    0 0 120px rgba(34, 139, 34, 0.3),
+    inset 0 20px 40px rgba(100, 150, 100, 0.2);
+  border: 3px solid rgba(100, 150, 100, 0.3);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+/* Show fallback only when image is not available */
+.island-background[data-no-image="true"]::before {
+  opacity: 1;
+  z-index: 0;
+}
+
+/* Add some decorative elements for the island - only if no image */
+.island-background::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 8px;
+  height: 8px;
+  background: #8b7355;
+  border-radius: 50%;
+  box-shadow: 
+    15px 20px 0 -2px #8b7355,
+    25px 35px 0 -2px #8b7355,
+    40px 15px 0 -2px #8b7355,
+    50px 40px 0 -2px #8b7355,
+    65px 25px 0 -2px #8b7355;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.island-background[data-no-image="true"]::after {
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* Grid removed - using zone-based placement only */
+
+/* Building zones overlay - clickable areas on the island */
+.building-zones-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.building-zone {
+  position: absolute;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0);
+}
+
+.building-zone:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--color-gold);
+}
+
+.building-zone.placing {
+  background: rgba(100, 200, 100, 0.2);
+  border-color: var(--color-success);
+  border-style: solid;
+  box-shadow: 0 0 15px rgba(100, 200, 100, 0.5);
+  animation: pulse-zone 2s ease-in-out infinite;
+}
+
+.building-zone.built {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--color-gold);
+  border-style: solid;
+}
+
+.building-zone.built:hover {
+  background: rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+@keyframes pulse-zone {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(100, 200, 100, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(100, 200, 100, 0.8);
+  }
+}
+
+.zone-building-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.zone-building-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.zone-building-level {
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.zone-placement-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.zone-placement-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.zone-placement-text {
+  font-size: 11px;
+  color: var(--color-success);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.zone-construction-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.zone-construction-text {
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .building-grid-container {
+    flex-direction: column;
+  }
+  
+  .building-panel {
+    flex: 1;
+    max-height: 300px;
+  }
+}
+

@@ -1,0 +1,152 @@
+.leaderboard-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+.leaderboard-container h2 {
+  color: var(--color-gold);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.leaderboard-description {
+  text-align: center;
+  color: var(--color-text-dim);
+  margin-bottom: 24px;
+}
+
+.player-rank-card {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-gold);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.player-rank-card h3 {
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.rank-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-number {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.rank-label {
+  color: var(--color-text-dim);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.leaderboard-list {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.leaderboard-header {
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 120px;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-ocean-deep);
+  border-bottom: 2px solid var(--color-border);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 120px;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.2s;
+}
+
+.leaderboard-row:hover {
+  background: var(--color-ocean-deep);
+}
+
+.leaderboard-row.top-three {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.rank-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-icon {
+  font-size: 24px;
+}
+
+.name-col {
+  display: flex;
+  align-items: center;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.gold-col,
+.diamonds-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--color-text-dim);
+  font-weight: 600;
+}
+
+.no-players {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-dim);
+}
+
+.refresh-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: var(--color-gold);
+  color: var(--color-ocean-dark);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.refresh-button:hover {
+  background: #d4af37;
+}
+
+@media (max-width: 768px) {
+  .leaderboard-header,
+  .leaderboard-row {
+    grid-template-columns: 60px 1fr 100px 100px;
+    gap: 8px;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .rank-icon {
+    font-size: 20px;
+  }
+}
+
