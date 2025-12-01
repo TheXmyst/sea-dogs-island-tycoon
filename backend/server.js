@@ -1255,24 +1255,155 @@ app.get('/api/captains/:playerId', async (req, res) => {
 // Gacha routes
 app.post('/api/gacha/pull', async (req, res) => {
   try {
-    const { playerId, costType, costAmount } = req.body;
+    const { playerId, costType, costAmount, pullCount = 1 } = req.body;
     
-    // Get current pity
-    const pityResult = await pool.query(
-      'SELECT * FROM gacha_pity WHERE player_id = $1',
-      [playerId]
-    );
+    if (!playerId || !costType || costAmount === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields: playerId, costType, costAmount' 
+      });
+    }
     
-    // TODO: Implement actual gacha logic
-    // For now, return mock data
+    // Import gacha logic
+    const { performGachaPull } = await import('./gacha.js');
     
+    // Get player data
+    let player;
+    if (useInMemoryDB) {
+      player = inMemoryDB.players.get(parseInt(playerId));
+      if (!player) {
+        return res.status(404).json({ success: false, error: 'Player not found' });
+      }
+    } else {
+      const result = await pool.query(
+        `SELECT resources, gacha_pity, captains FROM players WHERE id = $1`,
+        [playerId]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Player not found' });
+      }
+      
+      player = result.rows[0];
+      player.resources = typeof player.resources === 'string' ? JSON.parse(player.resources) : player.resources;
+      player.gacha_pity = typeof player.gacha_pity === 'string' ? JSON.parse(player.gacha_pity) : player.gacha_pity;
+      player.captains = typeof player.captains === 'string' ? JSON.parse(player.captains) : player.captains;
+    }
+    
+    // Validate resources
+    const currentResources = player.resources || {};
+    const requiredAmount = costAmount * pullCount;
+    
+    if (costType === 'diamonds') {
+      if ((currentResources.diamonds || 0) < requiredAmount) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Insufficient diamonds. Need ${requiredAmount}, have ${currentResources.diamonds || 0}` 
+        });
+      }
+    } else if (costType === 'fragments') {
+      if ((currentResources.fragments || 0) < requiredAmount) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Insufficient fragments. Need ${requiredAmount}, have ${currentResources.fragments || 0}` 
+        });
+      }
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid costType. Must be "diamonds" or "fragments"' 
+      });
+    }
+    
+    // Perform gacha pull(s)
+    const results = [];
+    let currentPity = player.gacha_pity || { 
+      pulls: 0, 
+      epicPulls: 0, 
+      legendaryPulls: 0, 
+      guaranteedEpicAt: 50, 
+      guaranteedLegendaryAt: 100 
+    };
+    let updatedResources = { ...currentResources };
+    let updatedCaptains = Array.isArray(player.captains) ? [...player.captains] : [];
+    
+    for (let i = 0; i < pullCount; i++) {
+      // Perform pull
+      const pullResult = performGachaPull(currentPity);
+      
+      // Check if captain already owned
+      const alreadyOwned = updatedCaptains.some(c => c.id === pullResult.captain.id);
+      
+      if (alreadyOwned) {
+        // Duplicate: add XP bonus
+        updatedCaptains = updatedCaptains.map(c => 
+          c.id === pullResult.captain.id 
+            ? { ...c, xp: (c.xp || 0) + 50 }
+            : c
+        );
+      } else {
+        // New captain: add to collection
+        updatedCaptains.push({
+          id: pullResult.captain.id,
+          rarity: pullResult.captain.rarity,
+          role: pullResult.captain.role,
+          level: 1,
+          xp: 0,
+          obtainedAt: Date.now(),
+        });
+      }
+      
+      // Update pity for next pull
+      currentPity = {
+        ...currentPity,
+        pulls: pullResult.newPityPulls,
+        epicPulls: pullResult.newEpicPulls,
+        legendaryPulls: pullResult.newLegendaryPulls,
+      };
+      
+      results.push({
+        captain: pullResult.captain,
+        duplicate: alreadyOwned,
+        pullNumber: i + 1,
+      });
+    }
+    
+    // Deduct cost
+    if (costType === 'diamonds') {
+      updatedResources.diamonds = (updatedResources.diamonds || 0) - requiredAmount;
+    } else {
+      updatedResources.fragments = (updatedResources.fragments || 0) - requiredAmount;
+    }
+    
+    // Update database
+    if (useInMemoryDB) {
+      player.resources = updatedResources;
+      player.gacha_pity = currentPity;
+      player.captains = updatedCaptains;
+      inMemoryDB.players.set(parseInt(playerId), player);
+    } else {
+      await pool.query(
+        `UPDATE players 
+         SET resources = $1, gacha_pity = $2, captains = $3 
+         WHERE id = $4`,
+        [
+          JSON.stringify(updatedResources),
+          JSON.stringify(currentPity),
+          JSON.stringify(updatedCaptains),
+          playerId
+        ]
+      );
+    }
+    
+    // Return results
     res.json({
       success: true,
-      captain: {
-        id: 'anne_sharp',
-        rarity: 'common',
-      },
-      newPityPulls: 1,
+      results: pullCount === 1 ? results[0] : results,
+      newPityPulls: currentPity.pulls,
+      newEpicPulls: currentPity.epicPulls,
+      newLegendaryPulls: currentPity.legendaryPulls,
+      updatedResources,
+      updatedCaptains: updatedCaptains, // Return updated captain list
     });
   } catch (error) {
     console.error('Gacha pull error:', error);

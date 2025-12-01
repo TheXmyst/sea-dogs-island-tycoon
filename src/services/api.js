@@ -241,3 +241,15 @@ export const debugAPI = {
   },
 };
 
+/**
+ * Gacha API - Secure server-side gacha pulls
+ */
+export const gachaAPI = {
+  async pull(playerId, costType, costAmount, pullCount = 1) {
+    return apiRequest('/api/gacha/pull', {
+      method: 'POST',
+      body: JSON.stringify({ playerId, costType, costAmount, pullCount }),
+    });
+  },
+};
+

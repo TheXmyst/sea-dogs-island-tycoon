@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { performGachaPull, CAPTAIN_RARITY } from '../config/captains';
-import { hasResources, deductResources } from '../utils/gameState';
+import { CAPTAIN_RARITY, getCaptainConfig } from '../config/captains';
+import { hasResources } from '../utils/gameState';
+import { gachaAPI } from '../services/api';
+import { authAPI } from '../services/api';
 import './GachaSystem.css';
 
 const PULL_COST_DIAMONDS = 100;
@@ -20,218 +22,125 @@ export default function GachaSystem({ gameState, onPullComplete }) {
   const canPullWithFragments = gameState.resources.fragments >= PULL_COST_FRAGMENTS;
   const canMultiPull = gameState.resources.diamonds >= MULTI_PULL_COST_DIAMONDS;
   
-  const handlePull = (useFragments = false) => {
-    const cost = useFragments 
-      ? { fragments: PULL_COST_FRAGMENTS }
-      : { diamonds: PULL_COST_DIAMONDS };
+  const handlePull = async (useFragments = false) => {
+    const costType = useFragments ? 'fragments' : 'diamonds';
+    const costAmount = useFragments ? PULL_COST_FRAGMENTS : PULL_COST_DIAMONDS;
     
-    if (!hasResources(gameState.resources, cost)) {
+    if (!hasResources(gameState.resources, { [costType]: costAmount })) {
       alert('Insufficient resources!');
+      return;
+    }
+    
+    const playerId = authAPI.getUserId();
+    if (!playerId) {
+      alert('You must be logged in to pull!');
       return;
     }
     
     setPulling(true);
     
-    // Simulate gacha animation delay
-    setTimeout(() => {
-      let result;
-      try {
-        result = performGachaPull(gameState);
-        
-        // Safety check
-        if (!result || !result.captain) {
-          console.error('Gacha pull returned invalid result:', result);
-          alert('Error: Failed to pull captain. Please try again.');
-          setPulling(false);
-          return;
-        }
-      } catch (error) {
-        console.error('Error during gacha pull:', error);
-        alert('Error: Failed to pull captain. ' + error.message);
-        setPulling(false);
-        return;
+    try {
+      // Call backend API for secure gacha pull
+      const response = await gachaAPI.pull(playerId, costType, costAmount, 1);
+      
+      if (!response.success || !response.results) {
+        throw new Error(response.error || 'Failed to pull captain');
       }
       
-      // Check if captain already owned
-      const alreadyOwned = (gameState.captains || []).some(c => c.id === result.captain.id);
+      const result = response.results;
       
-      // Deduct cost
-      const newResources = deductResources(gameState.resources, cost);
+      // Get full captain config for display
+      const captainConfig = getCaptainConfig(result.captain.id);
+      const fullCaptain = captainConfig ? {
+        ...result.captain,
+        ...captainConfig,
+      } : result.captain;
       
-      // Update game state
-      const currentCaptains = gameState.captains || [];
-      const newCaptains = alreadyOwned 
-        ? currentCaptains.map(c => 
-            c.id === result.captain.id 
-              ? { ...c, xp: (c.xp || 0) + 50 } // Duplicate = XP bonus
-              : c
-          )
-        : [...currentCaptains, {
-            id: result.captain.id,
-            rarity: result.captain.rarity,
-            role: result.captain.role,
-            level: result.captain.baseStats.level,
-            xp: result.captain.baseStats.xp,
-            xpToNext: result.captain.baseStats.xpToNext,
-            obtainedAt: Date.now(),
-          }];
-      
-      const currentPity = gameState.gachaPity || { 
-        pulls: 0, 
-        epicPulls: 0, 
-        legendaryPulls: 0, 
-        guaranteedEpicAt: 50, 
-        guaranteedLegendaryAt: 100 
-      };
-      const newGachaPity = {
-        ...currentPity,
-        pulls: result.newPityPulls || result.newEpicPulls || 0, // Backward compatibility
-        epicPulls: result.newEpicPulls !== undefined ? result.newEpicPulls : currentPity.epicPulls || 0,
-        legendaryPulls: result.newLegendaryPulls !== undefined ? result.newLegendaryPulls : currentPity.legendaryPulls || 0,
-      };
-      
+      // Update game state with server response
       onPullComplete({
-        resources: newResources,
-        captains: newCaptains,
-        gachaPity: newGachaPity,
+        resources: response.updatedResources,
+        captains: response.updatedCaptains || gameState.captains || [],
+        gachaPity: {
+          pulls: response.newPityPulls || 0,
+          epicPulls: response.newEpicPulls || 0,
+          legendaryPulls: response.newLegendaryPulls || 0,
+          guaranteedEpicAt: gameState.gachaPity?.guaranteedEpicAt || 50,
+          guaranteedLegendaryAt: gameState.gachaPity?.guaranteedLegendaryAt || 100,
+        },
         result: {
-          ...result,
-          duplicate: alreadyOwned,
+          captain: fullCaptain,
+          duplicate: result.duplicate,
         },
       });
       
       setLastResult({
-        ...result,
-        duplicate: alreadyOwned,
+        captain: fullCaptain,
+        duplicate: result.duplicate,
       });
       setShowResult(true);
+    } catch (error) {
+      console.error('Error during gacha pull:', error);
+      alert('Error: Failed to pull captain. ' + (error.message || 'Please try again.'));
+    } finally {
       setPulling(false);
-    }, 2000);
+    }
   };
   
-  const handleMultiPull = () => {
+  const handleMultiPull = async () => {
     if (!canMultiPull) {
       alert(`Insufficient diamonds! Need ${MULTI_PULL_COST_DIAMONDS} diamonds for 10 pulls.`);
       return;
     }
     
+    const playerId = authAPI.getUserId();
+    if (!playerId) {
+      alert('You must be logged in to pull!');
+      return;
+    }
+    
     setPulling(true);
     
-    // Simulate gacha animation delay
-    setTimeout(() => {
-      const results = [];
-      let currentGameState = { ...gameState };
-      let totalCost = { diamonds: 0 };
+    try {
+      // Call backend API for secure multi-pull
+      const response = await gachaAPI.pull(playerId, 'diamonds', PULL_COST_DIAMONDS, MULTI_PULL_COUNT);
       
-      // Perform 10 pulls
-      for (let i = 0; i < MULTI_PULL_COUNT; i++) {
-        try {
-          const result = performGachaPull(currentGameState);
-          
-          if (!result || !result.captain) {
-            console.error(`Pull ${i + 1} returned invalid result:`, result);
-            continue;
-          }
-          
-          // Check if captain already owned
-          const alreadyOwned = (currentGameState.captains || []).some(c => c.id === result.captain.id);
-          
-          // Update current game state for next pull (for pity system)
-          const currentPity = currentGameState.gachaPity || { 
-            pulls: 0, 
-            epicPulls: 0, 
-            legendaryPulls: 0, 
-            guaranteedEpicAt: 50, 
-            guaranteedLegendaryAt: 100 
-          };
-          currentGameState = {
-            ...currentGameState,
-            gachaPity: {
-              ...currentPity,
-              pulls: result.newPityPulls || result.newEpicPulls || 0, // Backward compatibility
-              epicPulls: result.newEpicPulls !== undefined ? result.newEpicPulls : currentPity.epicPulls || 0,
-              legendaryPulls: result.newLegendaryPulls !== undefined ? result.newLegendaryPulls : currentPity.legendaryPulls || 0,
-            },
-          };
-          
-          results.push({
-            ...result,
-            duplicate: alreadyOwned,
-            pullNumber: i + 1,
-          });
-          
-          totalCost.diamonds += PULL_COST_DIAMONDS;
-        } catch (error) {
-          console.error(`Error during pull ${i + 1}:`, error);
-        }
+      if (!response.success || !response.results || !Array.isArray(response.results)) {
+        throw new Error(response.error || 'Failed to perform pulls');
       }
       
-      if (results.length === 0) {
-        alert('Error: Failed to perform pulls. Please try again.');
-        setPulling(false);
-        return;
-      }
-      
-      // Process all results and update game state
-      let newCaptains = [...(gameState.captains || [])];
-      const newCaptainsMap = new Map();
-      
-      // First, create a map of existing captains
-      newCaptains.forEach(c => newCaptainsMap.set(c.id, { ...c }));
-      
-      // Process each result
-      results.forEach(result => {
-        const captainId = result.captain.id;
-        const existing = newCaptainsMap.get(captainId);
-        
-        if (existing) {
-          // Duplicate: add XP
-          newCaptainsMap.set(captainId, {
-            ...existing,
-            xp: (existing.xp || 0) + 50,
-          });
-        } else {
-          // New captain
-          newCaptainsMap.set(captainId, {
-            id: result.captain.id,
-            rarity: result.captain.rarity,
-            role: result.captain.role,
-            level: result.captain.baseStats.level,
-            xp: result.captain.baseStats.xp,
-            xpToNext: result.captain.baseStats.xpToNext,
-            obtainedAt: Date.now(),
-          });
-        }
+      // Get full captain configs for display
+      const results = response.results.map(result => {
+        const captainConfig = getCaptainConfig(result.captain.id);
+        return {
+          ...result,
+          captain: captainConfig ? {
+            ...result.captain,
+            ...captainConfig,
+          } : result.captain,
+        };
       });
       
-      newCaptains = Array.from(newCaptainsMap.values());
-      
-      // Get final pity state (from last pull)
-      const finalPityState = results.length > 0 
-        ? currentGameState.gachaPity 
-        : gameState.gachaPity;
-      
-      const finalPity = {
-        ...finalPityState,
-        pulls: finalPityState.pulls || finalPityState.epicPulls || 0, // Backward compatibility
-        epicPulls: finalPityState.epicPulls !== undefined ? finalPityState.epicPulls : finalPityState.pulls || 0,
-        legendaryPulls: finalPityState.legendaryPulls !== undefined ? finalPityState.legendaryPulls : finalPityState.pulls || 0,
-      };
-      
-      // Deduct total cost
-      const newResources = deductResources(gameState.resources, totalCost);
-      
-      // Update game state
+      // Update game state with server response
       onPullComplete({
-        resources: newResources,
-        captains: newCaptains,
-        gachaPity: finalPity,
+        resources: response.updatedResources,
+        captains: response.updatedCaptains || gameState.captains || [],
+        gachaPity: {
+          pulls: response.newPityPulls || 0,
+          epicPulls: response.newEpicPulls || 0,
+          legendaryPulls: response.newLegendaryPulls || 0,
+          guaranteedEpicAt: gameState.gachaPity?.guaranteedEpicAt || 50,
+          guaranteedLegendaryAt: gameState.gachaPity?.guaranteedLegendaryAt || 100,
+        },
       });
       
       setMultiPullResults(results);
       setShowMultiResult(true);
+    } catch (error) {
+      console.error('Error during multi-pull:', error);
+      alert('Error: Failed to perform pulls. ' + (error.message || 'Please try again.'));
+    } finally {
       setPulling(false);
-    }, 2000);
+    }
   };
   
   const getRarityColor = (rarity) => {
