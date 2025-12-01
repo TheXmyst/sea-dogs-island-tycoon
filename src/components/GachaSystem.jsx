@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CAPTAIN_RARITY, getCaptainConfig } from '../config/captains';
-import { hasResources } from '../utils/gameState';
+import { CAPTAIN_RARITY, getCaptainConfig, performGachaPull } from '../config/captains';
+import { hasResources, deductResources } from '../utils/gameState';
 import { gachaAPI } from '../services/api';
 import { authAPI } from '../services/api';
 import './GachaSystem.css';
@@ -27,13 +27,13 @@ export default function GachaSystem({ gameState, onPullComplete }) {
     const costAmount = useFragments ? PULL_COST_FRAGMENTS : PULL_COST_DIAMONDS;
     
     if (!hasResources(gameState.resources, { [costType]: costAmount })) {
-      alert('Insufficient resources!');
+      alert('Ressources insuffisantes !');
       return;
     }
     
     const playerId = authAPI.getUserId();
     if (!playerId) {
-      alert('You must be logged in to pull!');
+      alert('Vous devez être connecté pour utiliser le gacha !\n\nLe système gacha est sécurisé et nécessite une connexion pour fonctionner.');
       return;
     }
     
@@ -88,13 +88,13 @@ export default function GachaSystem({ gameState, onPullComplete }) {
   
   const handleMultiPull = async () => {
     if (!canMultiPull) {
-      alert(`Insufficient diamonds! Need ${MULTI_PULL_COST_DIAMONDS} diamonds for 10 pulls.`);
+      alert(`Diamants insuffisants ! Il faut ${MULTI_PULL_COST_DIAMONDS} diamants pour 10 tirages.`);
       return;
     }
     
     const playerId = authAPI.getUserId();
     if (!playerId) {
-      alert('You must be logged in to pull!');
+      alert('Vous devez être connecté pour utiliser le gacha !\n\nLe système gacha est sécurisé et nécessite une connexion pour fonctionner.');
       return;
     }
     
@@ -170,11 +170,26 @@ export default function GachaSystem({ gameState, onPullComplete }) {
   const nextEpicAt = gachaPity.guaranteedEpicAt || 50;
   const nextLegendaryAt = gachaPity.guaranteedLegendaryAt || 100;
   
+  const isAuthenticated = authAPI.isAuthenticated();
+  
   return (
     <div className="gacha-system">
       <div className="gacha-header">
         <h2>🎰 Captain Recruitment</h2>
         <p>Recruit powerful captains to join your crew!</p>
+        {!isAuthenticated && (
+          <div style={{
+            marginTop: '10px',
+            padding: '10px',
+            background: 'rgba(255, 193, 7, 0.2)',
+            border: '2px solid #ffc107',
+            borderRadius: '8px',
+            color: '#ffc107',
+            fontWeight: 'bold'
+          }}>
+            ⚠️ Vous devez être connecté pour utiliser le gacha (système sécurisé en ligne)
+          </div>
+        )}
       </div>
       
       <div className="gacha-pity-info">
