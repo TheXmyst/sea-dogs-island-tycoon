@@ -488,16 +488,58 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
             const isPlacing = placingBuilding === buildingType;
             const isBuilt = !!building;
             
+            // Calculate zone position relative to the actual displayed image (with cover)
+            const container = islandContainerRef.current;
+            let zoneStyle = {
+              left: position.zone.left,
+              top: position.zone.top,
+              width: position.zone.width,
+              height: position.zone.height,
+            };
+            
+            if (container) {
+              const rect = container.getBoundingClientRect();
+              const viewportWidth = rect.width;
+              const viewportHeight = rect.height;
+              const imageRatio = 5000 / 3500; // 10:7 ≈ 1.42857
+              const viewportRatio = viewportWidth / viewportHeight;
+              
+              // Calculate actual displayed image dimensions with cover
+              let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
+              if (viewportRatio > imageRatio) {
+                // Viewport is wider - height fills viewport, width extends
+                displayedHeight = viewportHeight;
+                displayedWidth = displayedHeight * imageRatio;
+                offsetX = (viewportWidth - displayedWidth) / 2;
+              } else {
+                // Viewport is taller - width fills viewport, height extends
+                displayedWidth = viewportWidth;
+                displayedHeight = displayedWidth / imageRatio;
+                offsetY = (viewportHeight - displayedHeight) / 2;
+              }
+              
+              // Convert percentage positions to pixels relative to displayed image, then back to percentage of container
+              const zoneLeftPercent = parseFloat(position.zone.left);
+              const zoneTopPercent = parseFloat(position.zone.top);
+              
+              // Position relative to displayed image
+              const zoneLeftPx = (zoneLeftPercent / 100) * displayedWidth;
+              const zoneTopPx = (zoneTopPercent / 100) * displayedHeight;
+              
+              // Convert to percentage of container
+              zoneStyle = {
+                left: `${((offsetX + zoneLeftPx) / viewportWidth) * 100}%`,
+                top: `${((offsetY + zoneTopPx) / viewportHeight) * 100}%`,
+                width: position.zone.width,
+                height: position.zone.height,
+              };
+            }
+            
             return (
               <div
                 key={buildingType}
                 className={`building-zone ${isBuilt ? 'built' : ''} ${isHovered ? 'hovered' : ''} ${isPlacing ? 'placing' : ''}`}
-                style={{
-                  left: position.zone.left,
-                  top: position.zone.top,
-                  width: position.zone.width,
-                  height: position.zone.height,
-                }}
+                style={zoneStyle}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent drag when clicking on zone
                   if (placingBuilding === buildingType && !isBuilt) {
