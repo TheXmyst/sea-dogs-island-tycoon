@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { loadGameState, saveGameState, deductResources, addResources, hasResources, getInitialGameState } from './utils/gameState';
 import { processResourceGeneration, getTimeUntilNextTick } from './utils/resourceGeneration';
-import { processOfflineProgress } from './utils/offlineProgress';
+// Removed processOfflineProgress - server now calculates all progress (MMO mode)
 import { applyBuildTimeReduction, applyShipBuffs, applyLootBonus } from './utils/captainBuffs';
 import { BUILDINGS, getBuildingConfig, checkPrerequisites } from './config/buildings';
 import { SHIPS, getShipConfig } from './config/ships';
@@ -394,20 +394,10 @@ export default function App() {
               technologies: mergedState.researchedTechnologies.length,
             });
             
-            // Process offline progress (MMO: timers continue even when offline)
-            const stateWithOfflineProgress = processOfflineProgress(mergedState);
-            console.log('⏱️ After offline progress (login), lastUpdate:', new Date(stateWithOfflineProgress.lastUpdate).toISOString());
-            // Save the updated state (with new lastUpdate) to backend
-            if (isAuthenticated && userId) {
-              saveToBackend(stateWithOfflineProgress, true);
-            }
-            setGameState(stateWithOfflineProgress);
-            saveGameState(stateWithOfflineProgress, userId);
-            
-            // Save updated state to server if there was offline progress
-            if (stateWithOfflineProgress !== mergedState) {
-              saveToBackend(stateWithOfflineProgress, true);
-            }
+            // Server already calculated progress - use it directly (MMO: server calculates everything)
+            console.log('✅ Using server-calculated state (MMO mode)');
+            setGameState(mergedState);
+            saveGameState(mergedState, userId);
           } else {
             // Server state not available, reset flag to allow retry
             hasLoadedFromServerRef.current = false;
@@ -416,32 +406,23 @@ export default function App() {
           console.warn('⚠️ Failed to load from backend on refresh, using local save:', error);
           // Reset flag on error to allow retry
           hasLoadedFromServerRef.current = false;
-          // Fallback to local storage for this user
+          // Fallback to local storage for this user (server will calculate progress on next connection)
           const localState = loadGameState(userId);
           if (localState && localState.version) {
-            // Process offline progress from local state too
-            const stateWithOfflineProgress = processOfflineProgress(localState);
-            console.log('⏱️ After offline progress (local fallback), lastUpdate:', new Date(stateWithOfflineProgress.lastUpdate).toISOString());
-            setGameState(stateWithOfflineProgress);
-            // Save updated state
-            saveGameState(stateWithOfflineProgress, userId);
+            console.log('⚠️ Using local state - server will calculate progress on next connection');
+            setGameState(localState);
+            saveGameState(localState, userId);
             if (isAuthenticated && userId) {
-              saveToBackend(stateWithOfflineProgress, true);
+              saveToBackend(localState, true);
             }
           } else {
             setGameState(localState);
           }
         }
       } else if (!isAuthenticated) {
-        // Not authenticated - use guest/local storage
-        const localState = loadGameState(null);
-        if (localState && localState.version) {
-          // Process offline progress from local state too
-          const stateWithOfflineProgress = processOfflineProgress(localState);
-          setGameState(stateWithOfflineProgress);
-        } else {
-          setGameState(localState);
-        }
+        // Not authenticated - require login for MMO mode
+        console.log('⚠️ Not authenticated - MMO mode requires login');
+        setShowAuthModal(true);
       }
     };
     
@@ -880,39 +861,22 @@ export default function App() {
               console.log('✅ Town Hall found:', { level: townHall.level, isConstructing: townHall.isConstructing, x: townHall.x, y: townHall.y });
             }
             
-            // Process offline progress (MMO: timers continue even when offline)
-            const stateWithOfflineProgress = processOfflineProgress(mergedState);
-            console.log('⏱️ After offline progress (login), lastUpdate:', new Date(stateWithOfflineProgress.lastUpdate).toISOString());
-            // Save the updated state (with new lastUpdate) to backend
-            if (isAuthenticated && userId) {
-              saveToBackend(stateWithOfflineProgress, true);
-            }
-            setGameState(stateWithOfflineProgress);
+            // Server already calculated progress - use it directly (MMO: server calculates everything)
+            console.log('✅ Using server-calculated state (MMO mode)');
+            setGameState(mergedState);
             // Save merged state to local storage as backup
-            saveGameState(stateWithOfflineProgress, response.id);
-            
-            // Save updated state to server if there was offline progress
-            if (stateWithOfflineProgress !== mergedState) {
-              try {
-                await gameAPI.saveGameState(response.id, stateWithOfflineProgress);
-                console.log('✅ Saved offline progress to server');
-              } catch (saveError) {
-                console.warn('Failed to save offline progress to server:', saveError);
-              }
-            }
+            saveGameState(mergedState, response.id);
             
             showSuccess('Game state loaded from server!');
           } else {
-            // No server state, try local state for this user
+            // No server state, try local state for this user (server will calculate progress on next connection)
             console.warn('No server state found, loading from localStorage');
             const localState = loadGameState(response.id);
             if (localState && localState.version) {
-              // Process offline progress from local state too
-              const stateWithOfflineProgress = processOfflineProgress(localState);
-              setGameState(stateWithOfflineProgress);
-              // Try to save local state to server
+              setGameState(localState);
+              // Try to save local state to server (server will calculate progress)
               try {
-                await gameAPI.saveGameState(response.id, stateWithOfflineProgress);
+                await gameAPI.saveGameState(response.id, localState);
               } catch (saveError) {
                 console.warn('Failed to save local state to server:', saveError);
               }
@@ -922,17 +886,15 @@ export default function App() {
           }
         } catch (error) {
           console.error('Failed to load from server:', error);
-          // Fallback to local state
+          // Fallback to local state (server will calculate progress on next connection)
           const localState = loadGameState(response.id);
           if (localState && localState.version) {
-            // Process offline progress from local state too
-            const stateWithOfflineProgress = processOfflineProgress(localState);
-            console.log('⏱️ After offline progress (local fallback), lastUpdate:', new Date(stateWithOfflineProgress.lastUpdate).toISOString());
-            setGameState(stateWithOfflineProgress);
-            // Save updated state
-            saveGameState(stateWithOfflineProgress, userId);
+            console.log('⚠️ Using local state - server will calculate progress on next connection');
+            setGameState(localState);
+            // Save state (server will calculate progress)
+            saveGameState(localState, userId);
             if (isAuthenticated && userId) {
-              saveToBackend(stateWithOfflineProgress, true);
+              saveToBackend(localState, true);
             }
           } else {
             setGameState(localState);

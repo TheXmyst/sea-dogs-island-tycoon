@@ -1018,12 +1018,39 @@ app.get('/api/game/load/:playerId', async (req, res) => {
     
     console.log(`📥 Loading game state for player ${playerId}`);
     
+    // Import game progress calculator
+    const { calculateGameProgress } = await import('./gameProgress.js');
+    
     if (useInMemoryDB) {
       // In-memory database fallback
       const player = inMemoryDB.players.get(playerId);
       if (!player) {
         return res.status(404).json({ success: false, error: 'Player not found' });
       }
+      
+      // Calculate progress server-side (MMO: resources continue even when offline)
+      const gameState = {
+        resources: player.resources || {},
+        buildings: player.buildings || [],
+        ships: player.ships || [],
+        captains: player.captains || [],
+        researchedTechnologies: player.researched_technologies || [],
+        technologyTimers: player.technology_timers || {},
+        timers: player.timers || { buildings: {}, ships: {} },
+        lastUpdate: player.last_update || Date.now(),
+      };
+      
+      const updatedState = calculateGameProgress(gameState);
+      
+      // Update player data with calculated progress
+      player.resources = updatedState.resources;
+      player.buildings = updatedState.buildings;
+      player.ships = updatedState.ships;
+      player.researched_technologies = updatedState.researchedTechnologies;
+      player.technology_timers = updatedState.technologyTimers;
+      player.timers = updatedState.timers;
+      player.last_update = updatedState.lastUpdate;
+      inMemoryDB.players.set(playerId, player);
       
       res.json({
         success: true,
@@ -1077,7 +1104,7 @@ app.get('/api/game/load/:playerId', async (req, res) => {
         }
       };
       
-      const gameState = {
+      let gameState = {
         success: true,
         resources: parseJSONB(player.resources) || {},
         buildings: parseJSONB(player.buildings) || [],
@@ -1093,10 +1120,36 @@ app.get('/api/game/load/:playerId', async (req, res) => {
         timers: parseJSONB(player.timers) || { buildings: {}, ships: {} },
         version: player.game_version || 4,
         // Convert BIGINT to number (JavaScript number can handle up to 2^53, timestamps are safe)
-        lastUpdate: player.last_update ? Number(player.last_update) : Date.now(), // Include lastUpdate for offline progress calculation
+        lastUpdate: player.last_update ? Number(player.last_update) : Date.now(),
       };
       
-      console.log(`✅ Loaded game state from PostgreSQL for player ${playerId}:`, {
+      // Calculate progress server-side (MMO: resources continue even when offline)
+      gameState = calculateGameProgress(gameState);
+      
+      // Save updated state back to database
+      await pool.query(
+        `UPDATE players SET 
+          resources = $1,
+          buildings = $2,
+          ships = $3,
+          researched_technologies = $4,
+          technology_timers = $5,
+          timers = $6,
+          last_update = $7
+        WHERE id = $8`,
+        [
+          JSON.stringify(gameState.resources),
+          JSON.stringify(gameState.buildings),
+          JSON.stringify(gameState.ships),
+          JSON.stringify(gameState.researchedTechnologies),
+          JSON.stringify(gameState.technologyTimers),
+          JSON.stringify(gameState.timers),
+          Math.floor(gameState.lastUpdate),
+          playerId
+        ]
+      );
+      
+      console.log(`✅ Loaded and calculated game progress from PostgreSQL for player ${playerId}:`, {
         buildings: gameState.buildings.length,
         buildingsList: gameState.buildings.map(b => `${b.type} Lv.${b.level}${b.isConstructing ? ' (constructing)' : ''}`),
         ships: gameState.ships.length,
