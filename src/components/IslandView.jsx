@@ -18,6 +18,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const [islandPosition, setIslandPosition] = useState({ x: 0, y: 0 });
   const [islandScale, setIslandScale] = useState(1);
   const islandContainerRef = useRef(null);
+  
+  // Touch state for mobile
+  const [touchStart, setTouchStart] = useState(null);
+  const [lastTouchDistance, setLastTouchDistance] = useState(null);
 
   const handleSelectBuilding = (buildingId) => {
     setPlacingBuilding(buildingId);
@@ -106,6 +110,129 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     setIsDragging(false);
   }, []);
 
+  // Touch handlers for mobile
+  const handleTouchStart = useCallback((e) => {
+    // Don't start drag if clicking on a building zone, button, or modal
+    if (
+      e.target.closest('.building-zone') || 
+      e.target.closest('.action-btn') ||
+      e.target.closest('.building-modal') ||
+      e.target.closest('.construction-menu')
+    ) {
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      // Single touch - start pan
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setTouchStart({ x: touch.clientX, y: touch.clientY });
+      setDragStart({
+        x: touch.clientX - islandPosition.x,
+        y: touch.clientY - islandPosition.y,
+      });
+    } else if (e.touches.length === 2) {
+      // Two touches - prepare for pinch zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      setLastTouchDistance(distance);
+      setIsDragging(false);
+    }
+    e.preventDefault();
+  }, [islandPosition]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (e.touches.length === 1 && isDragging && touchStart) {
+      // Single touch - pan
+      const touch = e.touches[0];
+      let newX = touch.clientX - dragStart.x;
+      let newY = touch.clientY - dragStart.y;
+      
+      // Apply same clamping logic as mouse move
+      const container = islandContainerRef.current;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const viewportWidth = containerRect.width;
+        const viewportHeight = containerRect.height;
+        const containerWidth = viewportWidth * 1.5;
+        const islandDisplayWidth = containerWidth * 0.7 * islandScale;
+        const islandDisplayHeight = islandDisplayWidth / (16/9);
+        const containerOffsetX = -viewportWidth * 0.25;
+        const containerOffsetY = -viewportHeight * 0.25;
+        const padding = 50;
+        const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
+        const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
+        const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
+        const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
+        
+        if (minX < maxX) {
+          newX = Math.max(minX, Math.min(maxX, newX));
+        }
+        const effectiveMinY = minY < maxY ? minY : (containerOffsetY + viewportHeight / 2 - islandDisplayHeight / 2);
+        const effectiveMaxY = minY < maxY ? maxY : (containerOffsetY + viewportHeight / 2 + islandDisplayHeight / 2);
+        newY = Math.max(effectiveMinY, Math.min(effectiveMaxY, newY));
+      }
+      
+      setIslandPosition({ x: newX, y: newY });
+    } else if (e.touches.length === 2 && lastTouchDistance) {
+      // Two touches - pinch zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      const scaleChange = distance / lastTouchDistance;
+      const newScale = Math.max(0.8, Math.min(1.5, islandScale * scaleChange));
+      setIslandScale(newScale);
+      setLastTouchDistance(distance);
+      
+      // Re-clamp position after zoom
+      const container = islandContainerRef.current;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const viewportWidth = containerRect.width;
+        const viewportHeight = containerRect.height;
+        const containerWidth = viewportWidth * 1.5;
+        const islandDisplayWidth = containerWidth * 0.7 * newScale;
+        const islandDisplayHeight = islandDisplayWidth / (16/9);
+        const containerOffsetX = -viewportWidth * 0.25;
+        const containerOffsetY = -viewportHeight * 0.25;
+        const padding = 50;
+        const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
+        const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
+        const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
+        const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
+        
+        setIslandPosition(prev => {
+          let clampedX = prev.x;
+          let clampedY = prev.y;
+          if (minX < maxX) {
+            clampedX = Math.max(minX, Math.min(maxX, prev.x));
+          }
+          if (minY < maxY) {
+            clampedY = Math.max(minY, Math.min(maxY, prev.y));
+          } else {
+            const centerY = containerOffsetY + viewportHeight / 2;
+            clampedY = Math.max(centerY - islandDisplayHeight / 2, Math.min(centerY + islandDisplayHeight / 2, prev.y));
+          }
+          return { x: clampedX, y: clampedY };
+        });
+      }
+    }
+    e.preventDefault();
+  }, [isDragging, touchStart, dragStart, islandScale, lastTouchDistance]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    setTouchStart(null);
+    setLastTouchDistance(null);
+  }, []);
+
   // Handle wheel zoom
   const handleWheel = useCallback((e) => {
     e.preventDefault();
@@ -192,6 +319,9 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         className="island-display"
         ref={islandContainerRef}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         <div 

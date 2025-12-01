@@ -363,11 +363,13 @@
   .island-action-bar {
     padding: 10px 12px;
     gap: 8px;
+    bottom: 55px; /* Adjust for smaller navigation on mobile */
   }
 
   .action-btn {
-    min-height: 60px;
-    padding: 8px 6px;
+    min-height: 60px; /* Minimum 44px touch target + padding */
+    padding: 10px 6px;
+    min-width: 60px; /* Ensure adequate touch target */
   }
 
   .btn-icon {
@@ -380,6 +382,29 @@
 
   .island-display {
     min-height: 400px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .island-action-bar {
+    padding: 8px 8px;
+    gap: 6px;
+    bottom: 50px;
+  }
+
+  .action-btn {
+    min-height: 56px;
+    padding: 8px 4px;
+    min-width: 56px;
+  }
+
+  .btn-icon {
+    font-size: 20px;
+  }
+
+  .btn-label {
+    font-size: 10px;
   }
 }
 

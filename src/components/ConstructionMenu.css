@@ -156,9 +156,12 @@
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .construction-menu {
-    width: 95%;
-    max-height: 85vh;
-    border-radius: 12px;
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-top: 2px solid var(--color-gold);
   }
 
   .construction-menu-header {
@@ -169,19 +172,61 @@
     font-size: 20px;
   }
 
+  .close-button {
+    width: 44px; /* Minimum touch target */
+    height: 44px;
+    font-size: 24px;
+  }
+
   .construction-filters {
     padding: 12px;
     gap: 6px;
   }
 
   .filter-btn {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 8px 14px; /* Better touch target */
+    font-size: 13px;
+    min-height: 40px;
   }
 
   .construction-list {
     padding: 12px;
     gap: 8px;
+  }
+
+  .building-card {
+    min-height: 80px; /* Better touch target */
+  }
+}
+
+@media (max-width: 480px) {
+  .construction-menu {
+    max-height: 95vh;
+    border-radius: 0;
+  }
+
+  .construction-menu-header {
+    padding: 12px;
+  }
+
+  .construction-menu-header h2 {
+    font-size: 18px;
+  }
+
+  .construction-filters {
+    padding: 10px;
+    gap: 4px;
+  }
+
+  .filter-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+
+  .construction-list {
+    padding: 10px;
+    gap: 6px;
   }
 }
 

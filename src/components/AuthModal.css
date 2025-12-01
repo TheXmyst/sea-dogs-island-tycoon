@@ -136,3 +136,57 @@
   color: var(--color-text-dim);
 }
 
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .auth-modal {
+    padding: 24px 20px;
+    width: 95%;
+    max-width: 100%;
+  }
+
+  .auth-modal h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .auth-modal-close {
+    width: 44px; /* Minimum touch target */
+    height: 44px;
+    font-size: 24px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .auth-form-group input {
+    padding: 14px; /* Better touch target */
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .auth-submit-button {
+    min-height: 48px; /* Minimum touch target */
+    padding: 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .auth-switch-button {
+    min-height: 44px; /* Better touch target */
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-modal {
+    padding: 20px 16px;
+    width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: 2px solid var(--color-gold);
+  }
+
+  .auth-modal h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+}
+
