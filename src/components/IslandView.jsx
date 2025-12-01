@@ -48,6 +48,53 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     e.preventDefault();
   };
 
+  // Calculate image dimensions and limits based on 5000x3500 (10:7 ratio)
+  const getImageLimits = useCallback(() => {
+    const container = islandContainerRef.current;
+    if (!container) return null;
+    
+    const containerRect = container.getBoundingClientRect();
+    const viewportWidth = containerRect.width;
+    const viewportHeight = containerRect.height;
+    
+    // Image dimensions: 5000x3500, ratio = 10:7 ≈ 1.42857
+    const imageRatio = 5000 / 3500; // 1.42857
+    const viewportRatio = viewportWidth / viewportHeight;
+    
+    // With background-size: cover, calculate actual displayed image size
+    let displayedWidth, displayedHeight;
+    if (viewportRatio > imageRatio) {
+      // Viewport is wider than image ratio - height fills viewport
+      displayedHeight = viewportHeight * islandScale;
+      displayedWidth = displayedHeight * imageRatio;
+    } else {
+      // Viewport is taller than image ratio - width fills viewport
+      displayedWidth = viewportWidth * islandScale;
+      displayedHeight = displayedWidth / imageRatio;
+    }
+    
+    // Calculate how much image extends beyond viewport
+    const overflowX = Math.max(0, displayedWidth - viewportWidth);
+    const overflowY = Math.max(0, displayedHeight - viewportHeight);
+    
+    // Limits for dragging: can't drag more than the overflow
+    const minX = -overflowX / 2;
+    const maxX = overflowX / 2;
+    const minY = -overflowY / 2;
+    const maxY = overflowY / 2;
+    
+    return {
+      displayedWidth,
+      displayedHeight,
+      overflowX,
+      overflowY,
+      minX,
+      maxX,
+      minY,
+      maxY,
+    };
+  }, [islandScale]);
+
   const handleMouseMove = useCallback((e) => {
     if (!isDragging) return;
     
@@ -55,57 +102,18 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     let newX = e.clientX - dragStart.x;
     let newY = e.clientY - dragStart.y;
     
-    // Get container dimensions
-    const container = islandContainerRef.current;
-    if (container) {
-      const containerRect = container.getBoundingClientRect();
-      const viewportWidth = containerRect.width;
-      const viewportHeight = containerRect.height;
-      
-      // Island image is 16:9 aspect ratio
-      // Container is 150% of viewport (width and height)
-      const containerWidth = viewportWidth * 1.5;
-      const containerHeight = viewportHeight * 1.5;
-      
-      // Calculate actual island size based on 16:9 ratio
-      // Island takes up most of the container, let's say 70% of container width
-      const islandDisplayWidth = containerWidth * 0.7 * islandScale;
-      const islandDisplayHeight = islandDisplayWidth / (16/9); // 16:9 aspect ratio
-      
-      // Container offset: left: -25%, top: -25% means it starts at -25% of viewport
-      const containerOffsetX = -viewportWidth * 0.25;
-      const containerOffsetY = -viewportHeight * 0.25;
-      
-      // Calculate limits: island should stay within viewport bounds
-      // The island center should not go beyond viewport edges
-      const padding = 50; // Padding from edges
-      
-      // X limits: island center can move from (viewport left + island half-width) to (viewport right - island half-width)
-      const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
-      const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
-      
-      // Y limits: ensure island stays within vertical bounds
-      // The island center Y position should be constrained
-      const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
-      const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
-      
-      // Only clamp if limits are valid (min < max)
-      if (minX < maxX) {
-        newX = Math.max(minX, Math.min(maxX, newX));
-      }
-      // ALWAYS clamp Y to prevent infinite vertical dragging
-      // For 16:9 image, height should be smaller than viewport, so limits should be valid
-      // Force clamp - if limits are invalid, use safe bounds
-      const effectiveMinY = minY < maxY ? minY : (containerOffsetY + viewportHeight / 2 - islandDisplayHeight / 2);
-      const effectiveMaxY = minY < maxY ? maxY : (containerOffsetY + viewportHeight / 2 + islandDisplayHeight / 2);
-      newY = Math.max(effectiveMinY, Math.min(effectiveMaxY, newY));
+    // Get limits and clamp position
+    const limits = getImageLimits();
+    if (limits) {
+      newX = Math.max(limits.minX, Math.min(limits.maxX, newX));
+      newY = Math.max(limits.minY, Math.min(limits.maxY, newY));
     }
     
     setIslandPosition({
       x: newX,
       y: newY,
     });
-  }, [isDragging, dragStart, islandScale]);
+  }, [isDragging, dragStart, getImageLimits]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -156,28 +164,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       let newY = touch.clientY - dragStart.y;
       
       // Apply same clamping logic as mouse move
-      const container = islandContainerRef.current;
-      if (container) {
-        const containerRect = container.getBoundingClientRect();
-        const viewportWidth = containerRect.width;
-        const viewportHeight = containerRect.height;
-        const containerWidth = viewportWidth * 1.5;
-        const islandDisplayWidth = containerWidth * 0.7 * islandScale;
-        const islandDisplayHeight = islandDisplayWidth / (16/9);
-        const containerOffsetX = -viewportWidth * 0.25;
-        const containerOffsetY = -viewportHeight * 0.25;
-        const padding = 50;
-        const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
-        const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
-        const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
-        const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
-        
-        if (minX < maxX) {
-          newX = Math.max(minX, Math.min(maxX, newX));
-        }
-        const effectiveMinY = minY < maxY ? minY : (containerOffsetY + viewportHeight / 2 - islandDisplayHeight / 2);
-        const effectiveMaxY = minY < maxY ? maxY : (containerOffsetY + viewportHeight / 2 + islandDisplayHeight / 2);
-        newY = Math.max(effectiveMinY, Math.min(effectiveMaxY, newY));
+      const limits = getImageLimits();
+      if (limits) {
+        newX = Math.max(limits.minX, Math.min(limits.maxX, newX));
+        newY = Math.max(limits.minY, Math.min(limits.maxY, newY));
       }
       
       setIslandPosition({ x: newX, y: newY });
@@ -190,45 +180,51 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         touch2.clientY - touch1.clientY
       );
       const scaleChange = distance / lastTouchDistanceRef.current;
-      const newScale = Math.max(0.8, Math.min(1.5, islandScale * scaleChange));
+      
+      const container = islandContainerRef.current;
+      if (!container) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const viewportWidth = containerRect.width;
+      const viewportHeight = containerRect.height;
+      const imageRatio = 5000 / 3500;
+      const maxScale = 3.0;
+      const minScale = 1.0;
+      
+      const newScale = Math.max(minScale, Math.min(maxScale, islandScale * scaleChange));
       setIslandScale(newScale);
       lastTouchDistanceRef.current = distance;
       
       // Re-clamp position after zoom
-      const container = islandContainerRef.current;
-      if (container) {
-        const containerRect = container.getBoundingClientRect();
-        const viewportWidth = containerRect.width;
-        const viewportHeight = containerRect.height;
-        const containerWidth = viewportWidth * 1.5;
-        const islandDisplayWidth = containerWidth * 0.7 * newScale;
-        const islandDisplayHeight = islandDisplayWidth / (16/9);
-        const containerOffsetX = -viewportWidth * 0.25;
-        const containerOffsetY = -viewportHeight * 0.25;
-        const padding = 50;
-        const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
-        const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
-        const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
-        const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
+      const viewportRatio = viewportWidth / viewportHeight;
+      const newLimits = (() => {
+        let displayedWidth, displayedHeight;
+        if (viewportRatio > imageRatio) {
+          displayedHeight = viewportHeight * newScale;
+          displayedWidth = displayedHeight * imageRatio;
+        } else {
+          displayedWidth = viewportWidth * newScale;
+          displayedHeight = displayedWidth / imageRatio;
+        }
         
-        setIslandPosition(prev => {
-          let clampedX = prev.x;
-          let clampedY = prev.y;
-          if (minX < maxX) {
-            clampedX = Math.max(minX, Math.min(maxX, prev.x));
-          }
-          if (minY < maxY) {
-            clampedY = Math.max(minY, Math.min(maxY, prev.y));
-          } else {
-            const centerY = containerOffsetY + viewportHeight / 2;
-            clampedY = Math.max(centerY - islandDisplayHeight / 2, Math.min(centerY + islandDisplayHeight / 2, prev.y));
-          }
-          return { x: clampedX, y: clampedY };
-        });
-      }
+        const overflowX = Math.max(0, displayedWidth - viewportWidth);
+        const overflowY = Math.max(0, displayedHeight - viewportHeight);
+        
+        return {
+          minX: -overflowX / 2,
+          maxX: overflowX / 2,
+          minY: -overflowY / 2,
+          maxY: overflowY / 2,
+        };
+      })();
+      
+      setIslandPosition(prev => ({
+        x: Math.max(newLimits.minX, Math.min(newLimits.maxX, prev.x)),
+        y: Math.max(newLimits.minY, Math.min(newLimits.maxY, prev.y)),
+      }));
     }
     e.preventDefault();
-  }, [dragStart, islandScale]);
+  }, [dragStart, islandScale, getImageLimits]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
@@ -241,49 +237,60 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const handleWheel = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.8, Math.min(1.5, islandScale * delta)); // Limit zoom range
+    const delta = e.deltaY > 0 ? 0.95 : 1.05;
+    
+    // Calculate new scale with limits
+    const container = islandContainerRef.current;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const viewportWidth = containerRect.width;
+    const viewportHeight = containerRect.height;
+    const imageRatio = 5000 / 3500;
+    const viewportRatio = viewportWidth / viewportHeight;
+    
+    // Calculate min/max scale based on viewport
+    // Min scale: image should at least fill viewport (cover behavior)
+    // Max scale: reasonable limit (e.g., 3x)
+    let minScale = 1.0;
+    if (viewportRatio > imageRatio) {
+      // Viewport wider - height determines scale
+      minScale = 1.0;
+    } else {
+      // Viewport taller - width determines scale
+      minScale = 1.0;
+    }
+    const maxScale = 3.0;
+    
+    const newScale = Math.max(minScale, Math.min(maxScale, islandScale * delta));
     setIslandScale(newScale);
     
-    // Re-clamp position after zoom to ensure island stays within bounds
-    const container = islandContainerRef.current;
-    if (container) {
-      const containerRect = container.getBoundingClientRect();
-      const viewportWidth = containerRect.width;
-      const viewportHeight = containerRect.height;
+    // Re-clamp position after zoom
+    const newLimits = (() => {
+      let displayedWidth, displayedHeight;
+      if (viewportRatio > imageRatio) {
+        displayedHeight = viewportHeight * newScale;
+        displayedWidth = displayedHeight * imageRatio;
+      } else {
+        displayedWidth = viewportWidth * newScale;
+        displayedHeight = displayedWidth / imageRatio;
+      }
       
-      const containerWidth = viewportWidth * 1.5;
-      const islandDisplayWidth = containerWidth * 0.7 * newScale;
-      const islandDisplayHeight = islandDisplayWidth / (16/9);
+      const overflowX = Math.max(0, displayedWidth - viewportWidth);
+      const overflowY = Math.max(0, displayedHeight - viewportHeight);
       
-      const containerOffsetX = -viewportWidth * 0.25;
-      const containerOffsetY = -viewportHeight * 0.25;
-      const padding = 50;
-      
-      const minX = containerOffsetX + (islandDisplayWidth / 2) - padding;
-      const maxX = containerOffsetX + viewportWidth - (islandDisplayWidth / 2) + padding;
-      const minY = containerOffsetY + (islandDisplayHeight / 2) - padding;
-      const maxY = containerOffsetY + viewportHeight - (islandDisplayHeight / 2) + padding;
-      
-      setIslandPosition(prev => {
-        let clampedX = prev.x;
-        let clampedY = prev.y;
-        
-        if (minX < maxX) {
-          clampedX = Math.max(minX, Math.min(maxX, prev.x));
-        }
-        // Always clamp Y if limits are valid
-        if (minY < maxY) {
-          clampedY = Math.max(minY, Math.min(maxY, prev.y));
-        } else {
-          // If limits are invalid, still try to keep island roughly centered vertically
-          const centerY = containerOffsetY + viewportHeight / 2;
-          clampedY = Math.max(centerY - islandDisplayHeight / 2, Math.min(centerY + islandDisplayHeight / 2, prev.y));
-        }
-        
-        return { x: clampedX, y: clampedY };
-      });
-    }
+      return {
+        minX: -overflowX / 2,
+        maxX: overflowX / 2,
+        minY: -overflowY / 2,
+        maxY: overflowY / 2,
+      };
+    })();
+    
+    setIslandPosition(prev => ({
+      x: Math.max(newLimits.minX, Math.min(newLimits.maxX, prev.x)),
+      y: Math.max(newLimits.minY, Math.min(newLimits.maxY, prev.y)),
+    }));
   }, [islandScale]);
   
   // Reset island position to center
@@ -340,7 +347,7 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
             data-no-image={!imageLoaded}
           >
             <img 
-              src="/island-background.png" 
+              src="/island-background.jpg" 
               alt="Pirate Island" 
               style={{ display: 'none' }}
               onLoad={() => setImageLoaded(true)}
@@ -406,37 +413,7 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         </div>
       </div>
 
-      {/* Action buttons bar - at bottom, semi-transparent */}
-      <div className="island-action-bar">
-        <button 
-          className="action-btn construction-btn"
-          onClick={() => setShowConstructionMenu(true)}
-        >
-          <span className="btn-icon">🏗️</span>
-          <span className="btn-label">Build</span>
-        </button>
-        <button 
-          className="action-btn upgrade-btn"
-          onClick={() => {
-            // Show upgrade info or open first building modal
-            const firstBuilding = gameState.buildings[0];
-            if (firstBuilding) {
-              setShowModal(firstBuilding);
-            }
-          }}
-        >
-          <span className="btn-icon">⬆️</span>
-          <span className="btn-label">Upgrade</span>
-        </button>
-        <button 
-          className="action-btn reset-btn"
-          onClick={handleResetPosition}
-          title="Reset island position and zoom"
-        >
-          <span className="btn-icon">🎯</span>
-          <span className="btn-label">Reset</span>
-        </button>
-      </div>
+      {/* Action buttons removed - using round buttons in navigation instead */}
 
       {/* Construction Menu */}
       <ConstructionMenu

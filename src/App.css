@@ -13,21 +13,7 @@
 }
 
 .app-header {
-  background: rgba(20, 30, 40, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 2px solid var(--color-border);
-  padding: 8px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 201;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: none; /* Hidden - image should be fullscreen */
 }
 
 .app-header h1 {

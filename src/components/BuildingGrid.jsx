@@ -85,7 +85,7 @@ export default function BuildingGrid({ gameState, onBuild, onUpgrade }) {
         >
           {/* Test if image loads */}
           <img 
-            src="/island-background.png" 
+            src="/island-background.jpg" 
             alt="" 
             style={{ display: 'none' }}
             onLoad={() => setImageLoaded(true)}
