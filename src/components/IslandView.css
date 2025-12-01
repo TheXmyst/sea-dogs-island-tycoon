@@ -220,62 +220,51 @@
 
 .building-zone {
   position: absolute;
-  border: 2px dashed transparent;
-  border-radius: 6px;
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
   pointer-events: all;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0);
-  min-width: 40px;
-  min-height: 40px;
+  background: transparent;
+  min-width: 30px;
+  min-height: 30px;
 }
 
 .building-zone:hover {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.15);
 }
 
 .building-zone.placing {
   background: rgba(100, 200, 100, 0.2);
-  border-color: var(--color-success);
-  border-style: solid;
-  box-shadow: 0 0 15px rgba(100, 200, 100, 0.5);
+  box-shadow: 0 0 10px rgba(100, 200, 100, 0.4);
   animation: pulse-zone 2s ease-in-out infinite;
 }
 
 .building-zone.built {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: var(--color-gold);
-  border-style: solid;
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .building-zone.built:hover {
-  background: rgba(212, 175, 55, 0.25);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
 }
 
-/* Make zones more visible on mobile - always show borders */
+/* Make zones more visible on mobile */
 @media (max-width: 768px) {
   .building-zone {
-    border: 2px dashed rgba(212, 175, 55, 0.3);
-    min-width: 50px;
-    min-height: 50px;
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .building-zone.built {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: var(--color-gold);
-    border-style: solid;
-    border-width: 3px;
+    background: rgba(212, 175, 55, 0.15);
   }
 
   .building-zone.placing {
-    background: rgba(100, 200, 100, 0.3);
-    border-color: var(--color-success);
-    border-width: 3px;
+    background: rgba(100, 200, 100, 0.25);
   }
 
   .zone-building-icon {

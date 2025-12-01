@@ -11,6 +11,8 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const [imageLoaded, setImageLoaded] = useState(true);
   const [hoveredZone, setHoveredZone] = useState(null);
   const [showConstructionMenu, setShowConstructionMenu] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [lastClickPos, setLastClickPos] = useState(null);
   
   // Drag/pan state
   const [isDragging, setIsDragging] = useState(false);
@@ -43,6 +45,21 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     ) {
       return;
     }
+    
+    // Debug mode: show click coordinates
+    if (debugMode) {
+      const container = islandContainerRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        setLastClickPos({ x: x.toFixed(2), y: y.toFixed(2) });
+        console.log(`Click position: left: ${x.toFixed(2)}%, top: ${y.toFixed(2)}%`);
+        e.preventDefault();
+        return;
+      }
+    }
+    
     setIsDragging(true);
     // Store the initial mouse position and current island position
     setDragStart({
@@ -326,6 +343,17 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     setIslandScale(1);
   };
 
+  // Debug mode toggle with Ctrl+D key
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if ((e.key === 'd' || e.key === 'D') && (e.ctrlKey || e.metaKey)) {
+        setDebugMode(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   // Cleanup event listeners
   useEffect(() => {
     if (isDragging) {
@@ -351,6 +379,32 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
 
   return (
     <div className="island-view">
+      {/* Debug mode toggle - press D key */}
+      {debugMode && (
+        <div style={{
+          position: 'fixed',
+          top: '100px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.9)',
+          color: '#ffd700',
+          padding: '12px',
+          borderRadius: '8px',
+          zIndex: 1000,
+          border: '2px solid #ffd700',
+          fontFamily: 'monospace',
+          fontSize: '12px'
+        }}>
+          <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🔧 DEBUG MODE</div>
+          <div>Press D to toggle</div>
+          {lastClickPos && (
+            <div style={{ marginTop: '8px', color: '#fff' }}>
+              Last click:<br/>
+              left: {lastClickPos.x}%<br/>
+              top: {lastClickPos.y}%
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Island display - fullscreen */}
       <div 

@@ -22,12 +22,12 @@ export const BUILDING_POSITIONS = {
     y: 2,
     description: 'Center-north, near the large tree',
     // Zone coordinates as percentage of island image (for visual overlay)
-    // Positioned near the large tree in upper-center, slightly left
+    // Smaller zones, no borders - positions to be adjusted based on new image
     zone: {
       left: '38%',
       top: '18%',
-      width: '14%',
-      height: '14%',
+      width: '6%',
+      height: '6%',
     },
   },
   dock: {
@@ -38,8 +38,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '72%',
       top: '55%',
-      width: '16%',
-      height: '20%',
+      width: '7%',
+      height: '8%',
     },
   },
   gold_mine: {
@@ -50,8 +50,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '12%',
       top: '38%',
-      width: '14%',
-      height: '14%',
+      width: '6%',
+      height: '6%',
     },
   },
   lumber_mill: {
@@ -62,8 +62,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '8%',
       top: '18%',
-      width: '14%',
-      height: '14%',
+      width: '6%',
+      height: '6%',
     },
   },
   quarry: {
@@ -74,8 +74,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '15%',
       top: '68%',
-      width: '14%',
-      height: '16%',
+      width: '6%',
+      height: '7%',
     },
   },
   distillery: {
@@ -86,8 +86,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '42%',
       top: '45%',
-      width: '14%',
-      height: '14%',
+      width: '6%',
+      height: '6%',
     },
   },
   tavern: {
@@ -98,8 +98,8 @@ export const BUILDING_POSITIONS = {
     zone: {
       left: '62%',
       top: '25%',
-      width: '14%',
-      height: '14%',
+      width: '6%',
+      height: '6%',
     },
   },
 };
