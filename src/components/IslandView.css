@@ -151,6 +151,7 @@
   width: 100vw;
   user-select: none;
   -webkit-user-select: none;
+  z-index: 1; /* Below resource bar and navigation */
 }
 
 /* Ocean background pattern - removed, image is the background */

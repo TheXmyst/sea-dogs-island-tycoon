@@ -31,21 +31,26 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
 
   // Drag/pan handlers
   const handleMouseDown = (e) => {
-    // Don't start drag if clicking on a building zone, button, or modal
+    // Don't start drag if clicking on a building zone, button, modal, navigation, or resource bar
     if (
       e.target.closest('.building-zone') || 
       e.target.closest('.action-btn') ||
       e.target.closest('.building-modal') ||
-      e.target.closest('.construction-menu')
+      e.target.closest('.construction-menu') ||
+      e.target.closest('.navigation') ||
+      e.target.closest('.resource-hud') ||
+      e.target.closest('.nav-item')
     ) {
       return;
     }
     setIsDragging(true);
+    // Store the initial mouse position and current island position
     setDragStart({
-      x: e.clientX - islandPosition.x,
-      y: e.clientY - islandPosition.y,
+      x: e.clientX,
+      y: e.clientY,
     });
     e.preventDefault();
+    e.stopPropagation();
   };
 
   // Calculate image dimensions and limits based on 5000x3500 (10:7 ratio)
@@ -62,13 +67,14 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     const viewportRatio = viewportWidth / viewportHeight;
     
     // With background-size: cover, calculate actual displayed image size
+    // The container itself is 100% of viewport, but the image inside scales
     let displayedWidth, displayedHeight;
     if (viewportRatio > imageRatio) {
-      // Viewport is wider than image ratio - height fills viewport
+      // Viewport is wider than image ratio - height fills viewport, width extends
       displayedHeight = viewportHeight * islandScale;
       displayedWidth = displayedHeight * imageRatio;
     } else {
-      // Viewport is taller than image ratio - width fills viewport
+      // Viewport is taller than image ratio - width fills viewport, height extends
       displayedWidth = viewportWidth * islandScale;
       displayedHeight = displayedWidth / imageRatio;
     }
@@ -78,10 +84,11 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     const overflowY = Math.max(0, displayedHeight - viewportHeight);
     
     // Limits for dragging: can't drag more than the overflow
-    const minX = -overflowX / 2;
-    const maxX = overflowX / 2;
-    const minY = -overflowY / 2;
-    const maxY = overflowY / 2;
+    // When there's no overflow, allow small movement for smooth UX
+    const minX = overflowX > 0 ? -overflowX / 2 : -10;
+    const maxX = overflowX > 0 ? overflowX / 2 : 10;
+    const minY = overflowY > 0 ? -overflowY / 2 : -10;
+    const maxY = overflowY > 0 ? overflowY / 2 : 10;
     
     return {
       displayedWidth,
@@ -98,9 +105,13 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const handleMouseMove = useCallback((e) => {
     if (!isDragging) return;
     
-    // Calculate new position
-    let newX = e.clientX - dragStart.x;
-    let newY = e.clientY - dragStart.y;
+    // Calculate the delta (how much the mouse moved)
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    
+    // Apply delta to current position
+    let newX = islandPosition.x + deltaX;
+    let newY = islandPosition.y + deltaY;
     
     // Get limits and clamp position
     const limits = getImageLimits();
@@ -113,7 +124,13 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       x: newX,
       y: newY,
     });
-  }, [isDragging, dragStart, getImageLimits]);
+    
+    // Update dragStart to current position for smooth continuous dragging
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+    });
+  }, [isDragging, dragStart, islandPosition, getImageLimits]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -138,8 +155,8 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       setIsDragging(true);
       touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       setDragStart({
-        x: touch.clientX - islandPosition.x,
-        y: touch.clientY - islandPosition.y,
+        x: touch.clientX,
+        y: touch.clientY,
       });
     } else if (e.touches.length === 2) {
       // Two touches - prepare for pinch zoom
@@ -160,8 +177,12 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     if (e.touches.length === 1 && isDraggingTouchRef.current && touchStartRef.current) {
       // Single touch - pan
       const touch = e.touches[0];
-      let newX = touch.clientX - dragStart.x;
-      let newY = touch.clientY - dragStart.y;
+      const deltaX = touch.clientX - dragStart.x;
+      const deltaY = touch.clientY - dragStart.y;
+      
+      // Apply delta to current position
+      let newX = islandPosition.x + deltaX;
+      let newY = islandPosition.y + deltaY;
       
       // Apply same clamping logic as mouse move
       const limits = getImageLimits();
@@ -171,6 +192,12 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       }
       
       setIslandPosition({ x: newX, y: newY });
+      
+      // Update dragStart for smooth continuous dragging
+      setDragStart({
+        x: touch.clientX,
+        y: touch.clientY,
+      });
     } else if (e.touches.length === 2 && lastTouchDistanceRef.current) {
       // Two touches - pinch zoom
       const touch1 = e.touches[0];
