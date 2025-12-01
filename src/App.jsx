@@ -945,17 +945,9 @@ export default function App() {
     }
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    // Save current state to server before logging out
-    if (isAuthenticated && userId && gameState) {
-      try {
-        await gameAPI.saveGameState(userId, gameState);
-        console.log('✅ Game state saved before logout');
-      } catch (error) {
-        console.error('❌ Failed to save before logout:', error);
-      }
-    }
-    
+  const handleLogout = useCallback(() => {
+    // No need to save - server already has all data (MMO mode)
+    // Client will fetch everything from server on next login
     authAPI.logout();
     setIsAuthenticated(false);
     setUserId(null);
