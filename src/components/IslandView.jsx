@@ -47,14 +47,44 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     }
     
     // Debug mode: show click coordinates
+    // Calculate coordinates relative to the actual displayed image (with cover)
     if (debugMode) {
       const container = islandContainerRef.current;
       if (container) {
         const rect = container.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        setLastClickPos({ x: x.toFixed(2), y: y.toFixed(2) });
-        console.log(`Click position: left: ${x.toFixed(2)}%, top: ${y.toFixed(2)}%`);
+        const viewportWidth = rect.width;
+        const viewportHeight = rect.height;
+        const imageRatio = 5000 / 3500; // 10:7 ≈ 1.42857
+        const viewportRatio = viewportWidth / viewportHeight;
+        
+        // Calculate actual displayed image dimensions with cover
+        let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
+        if (viewportRatio > imageRatio) {
+          // Viewport is wider - height fills viewport, width extends
+          displayedHeight = viewportHeight;
+          displayedWidth = displayedHeight * imageRatio;
+          offsetX = (viewportWidth - displayedWidth) / 2;
+        } else {
+          // Viewport is taller - width fills viewport, height extends
+          displayedWidth = viewportWidth;
+          displayedHeight = displayedWidth / imageRatio;
+          offsetY = (viewportHeight - displayedHeight) / 2;
+        }
+        
+        // Calculate click position relative to the displayed image
+        const clickX = e.clientX - rect.left - offsetX;
+        const clickY = e.clientY - rect.top - offsetY;
+        const x = (clickX / displayedWidth) * 100;
+        const y = (clickY / displayedHeight) * 100;
+        
+        setLastClickPos({ 
+          x: x.toFixed(2), 
+          y: y.toFixed(2),
+          rawX: (clickX / displayedWidth * 100).toFixed(2),
+          rawY: (clickY / displayedHeight * 100).toFixed(2)
+        });
+        console.log(`Click position (relative to image): left: ${x.toFixed(2)}%, top: ${y.toFixed(2)}%`);
+        console.log(`Image display: ${displayedWidth.toFixed(0)}x${displayedHeight.toFixed(0)}, offset: ${offsetX.toFixed(0)}, ${offsetY.toFixed(0)}`);
         e.preventDefault();
         return;
       }
@@ -403,6 +433,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
               top: {lastClickPos.y}%
             </div>
           )}
+          <div style={{ marginTop: '8px', fontSize: '10px', color: '#aaa' }}>
+            Coordinates relative to image<br/>
+            (accounting for cover crop)
+          </div>
         </div>
       )}
 
