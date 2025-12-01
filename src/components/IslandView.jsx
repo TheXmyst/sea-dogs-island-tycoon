@@ -13,6 +13,9 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const [showConstructionMenu, setShowConstructionMenu] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [lastClickPos, setLastClickPos] = useState(null);
+  const [captureMode, setCaptureMode] = useState(null); // 'current' or 'desired'
+  const [currentPosition, setCurrentPosition] = useState(null);
+  const [desiredPosition, setDesiredPosition] = useState(null);
   
   // Drag/pan state
   const [isDragging, setIsDragging] = useState(false);
@@ -46,48 +49,63 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       return;
     }
     
-    // Debug mode: show click coordinates
-    // Calculate coordinates relative to the actual displayed image (with cover)
-    if (debugMode) {
+    // Helper function to calculate image coordinates from click
+    const getImageCoordinates = (clientX, clientY) => {
       const container = islandContainerRef.current;
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        const viewportWidth = rect.width;
-        const viewportHeight = rect.height;
-        const imageRatio = 5000 / 3500; // 10:7 ≈ 1.42857
-        const viewportRatio = viewportWidth / viewportHeight;
-        
-        // Calculate actual displayed image dimensions with cover
-        let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
-        if (viewportRatio > imageRatio) {
-          // Viewport is wider - height fills viewport, width extends
-          displayedHeight = viewportHeight;
-          displayedWidth = displayedHeight * imageRatio;
-          offsetX = (viewportWidth - displayedWidth) / 2;
-        } else {
-          // Viewport is taller - width fills viewport, height extends
-          displayedWidth = viewportWidth;
-          displayedHeight = displayedWidth / imageRatio;
-          offsetY = (viewportHeight - displayedHeight) / 2;
+      if (!container) return null;
+      
+      const rect = container.getBoundingClientRect();
+      const viewportWidth = rect.width;
+      const viewportHeight = rect.height;
+      const imageRatio = 5000 / 3500; // 10:7 ≈ 1.42857
+      const viewportRatio = viewportWidth / viewportHeight;
+      
+      // Calculate actual displayed image dimensions with cover
+      let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
+      if (viewportRatio > imageRatio) {
+        displayedHeight = viewportHeight;
+        displayedWidth = displayedHeight * imageRatio;
+        offsetX = (viewportWidth - displayedWidth) / 2;
+      } else {
+        displayedWidth = viewportWidth;
+        displayedHeight = displayedWidth / imageRatio;
+        offsetY = (viewportHeight - displayedHeight) / 2;
+      }
+      
+      // Calculate click position relative to the displayed image
+      const clickX = clientX - rect.left - offsetX;
+      const clickY = clientY - rect.top - offsetY;
+      const x = (clickX / displayedWidth) * 100;
+      const y = (clickY / displayedHeight) * 100;
+      
+      return { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) };
+    };
+
+    // Debug mode: show click coordinates or capture positions
+    if (debugMode) {
+      // If capturing desired position, save it
+      if (captureMode === 'desired') {
+        const coords = getImageCoordinates(e.clientX, e.clientY);
+        if (coords) {
+          setDesiredPosition(coords);
+          setCaptureMode(null);
+          console.log(`Desired position captured: left: ${coords.x}%, top: ${coords.y}%`);
         }
-        
-        // Calculate click position relative to the displayed image
-        const clickX = e.clientX - rect.left - offsetX;
-        const clickY = e.clientY - rect.top - offsetY;
-        const x = (clickX / displayedWidth) * 100;
-        const y = (clickY / displayedHeight) * 100;
-        
-        setLastClickPos({ 
-          x: x.toFixed(2), 
-          y: y.toFixed(2),
-          rawX: (clickX / displayedWidth * 100).toFixed(2),
-          rawY: (clickY / displayedHeight * 100).toFixed(2)
-        });
-        console.log(`Click position (relative to image): left: ${x.toFixed(2)}%, top: ${y.toFixed(2)}%`);
-        console.log(`Image display: ${displayedWidth.toFixed(0)}x${displayedHeight.toFixed(0)}, offset: ${offsetX.toFixed(0)}, ${offsetY.toFixed(0)}`);
         e.preventDefault();
         return;
       }
+      
+      // Normal debug click - just show coordinates
+      const coords = getImageCoordinates(e.clientX, e.clientY);
+      if (coords) {
+        setLastClickPos({ 
+          x: coords.x.toFixed(2), 
+          y: coords.y.toFixed(2)
+        });
+        console.log(`Click position (relative to image): left: ${coords.x}%, top: ${coords.y}%`);
+      }
+      e.preventDefault();
+      return;
     }
     
     setIsDragging(true);
@@ -409,34 +427,116 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
 
   return (
     <div className="island-view">
-      {/* Debug mode toggle - press D key */}
+      {/* Debug position panel */}
       {debugMode && (
         <div style={{
           position: 'fixed',
           top: '100px',
           right: '20px',
-          background: 'rgba(0, 0, 0, 0.9)',
+          background: 'rgba(0, 0, 0, 0.95)',
           color: '#ffd700',
-          padding: '12px',
+          padding: '16px',
           borderRadius: '8px',
           zIndex: 1000,
           border: '2px solid #ffd700',
           fontFamily: 'monospace',
-          fontSize: '12px'
+          fontSize: '12px',
+          minWidth: '280px',
+          maxWidth: '320px'
         }}>
-          <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🔧 DEBUG MODE</div>
-          <div>Press Ctrl+Shift+A to toggle</div>
-          {lastClickPos && (
-            <div style={{ marginTop: '8px', color: '#fff' }}>
+          <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>🔧 Debug position</div>
+          <div style={{ marginBottom: '8px', fontSize: '10px', color: '#aaa' }}>
+            Press Ctrl+Shift+A to toggle
+          </div>
+          
+          {/* Capture buttons */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                setCaptureMode('current');
+                setCurrentPosition(null);
+              }}
+              style={{
+                padding: '6px 12px',
+                background: captureMode === 'current' ? '#ffd700' : 'rgba(212, 175, 55, 0.2)',
+                color: captureMode === 'current' ? '#000' : '#ffd700',
+                border: '1px solid #ffd700',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold'
+              }}
+            >
+              {captureMode === 'current' ? '⏸ Click zone...' : '📍 Capturer position actuelle'}
+            </button>
+            <button
+              onClick={() => {
+                setCaptureMode('desired');
+                setDesiredPosition(null);
+              }}
+              style={{
+                padding: '6px 12px',
+                background: captureMode === 'desired' ? '#4CAF50' : 'rgba(76, 175, 80, 0.2)',
+                color: captureMode === 'desired' ? '#fff' : '#4CAF50',
+                border: '1px solid #4CAF50',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold'
+              }}
+            >
+              {captureMode === 'desired' ? '⏸ Click image...' : '🎯 Capturer position désirée'}
+            </button>
+          </div>
+          
+          {/* Current position */}
+          {currentPosition && (
+            <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Position actuelle ({currentPosition.buildingType}):</div>
+              <div style={{ color: '#fff' }}>
+                left: {currentPosition.x}%<br/>
+                top: {currentPosition.y}%
+              </div>
+            </div>
+          )}
+          
+          {/* Desired position */}
+          {desiredPosition && (
+            <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Position désirée:</div>
+              <div style={{ color: '#fff' }}>
+                left: {desiredPosition.x}%<br/>
+                top: {desiredPosition.y}%
+              </div>
+            </div>
+          )}
+          
+          {/* Error calculation */}
+          {currentPosition && desiredPosition && (
+            <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(255, 100, 100, 0.2)', borderRadius: '4px', border: '1px solid #ff6464' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#ff6464' }}>Erreur:</div>
+              <div style={{ color: '#fff' }}>
+                Δleft: {(desiredPosition.x - currentPosition.x).toFixed(2)}%<br/>
+                Δtop: {(desiredPosition.y - currentPosition.y).toFixed(2)}%
+              </div>
+              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#4CAF50' }}>Coordonnées corrigées:</div>
+                <div style={{ color: '#fff', fontSize: '11px' }}>
+                  left: {desiredPosition.x}%<br/>
+                  top: {desiredPosition.y}%
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Last click */}
+          {lastClickPos && !currentPosition && !desiredPosition && (
+            <div style={{ marginTop: '12px', color: '#fff', fontSize: '11px' }}>
               Last click:<br/>
               left: {lastClickPos.x}%<br/>
               top: {lastClickPos.y}%
             </div>
           )}
-          <div style={{ marginTop: '8px', fontSize: '10px', color: '#aaa' }}>
-            Coordinates relative to image<br/>
-            (accounting for cover crop)
-          </div>
         </div>
       )}
 
@@ -542,6 +642,49 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                 style={zoneStyle}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent drag when clicking on zone
+                  
+                  // Debug mode: capture current position
+                  if (debugMode && captureMode === 'current') {
+                    const container = islandContainerRef.current;
+                    if (container) {
+                      const rect = container.getBoundingClientRect();
+                      const viewportWidth = rect.width;
+                      const viewportHeight = rect.height;
+                      const imageRatio = 5000 / 3500;
+                      const viewportRatio = viewportWidth / viewportHeight;
+                      
+                      let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
+                      if (viewportRatio > imageRatio) {
+                        displayedHeight = viewportHeight;
+                        displayedWidth = displayedHeight * imageRatio;
+                        offsetX = (viewportWidth - displayedWidth) / 2;
+                      } else {
+                        displayedWidth = viewportWidth;
+                        displayedHeight = displayedWidth / imageRatio;
+                        offsetY = (viewportHeight - displayedHeight) / 2;
+                      }
+                      
+                      // Get zone center position relative to displayed image
+                      const zoneLeftPercent = parseFloat(position.zone.left);
+                      const zoneTopPercent = parseFloat(position.zone.top);
+                      const zoneLeftPx = (zoneLeftPercent / 100) * displayedWidth;
+                      const zoneTopPx = (zoneTopPercent / 100) * displayedHeight;
+                      
+                      // Convert to percentage of displayed image
+                      const x = (zoneLeftPx / displayedWidth) * 100;
+                      const y = (zoneTopPx / displayedHeight) * 100;
+                      
+                      setCurrentPosition({ 
+                        x: parseFloat(x.toFixed(2)), 
+                        y: parseFloat(y.toFixed(2)),
+                        buildingType 
+                      });
+                      setCaptureMode(null);
+                      console.log(`Current position captured for ${buildingType}: left: ${x.toFixed(2)}%, top: ${y.toFixed(2)}%`);
+                    }
+                    return;
+                  }
+                  
                   if (placingBuilding === buildingType && !isBuilt) {
                     onBuild(buildingType, position.x, position.y);
                     setPlacingBuilding(null);
