@@ -16,6 +16,9 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const [captureMode, setCaptureMode] = useState(null); // 'current' or 'desired'
   const [currentPosition, setCurrentPosition] = useState(null);
   const [desiredPosition, setDesiredPosition] = useState(null);
+  const [draggingZone, setDraggingZone] = useState(null); // buildingType being dragged
+  const [zoneDragStart, setZoneDragStart] = useState({ x: 0, y: 0 });
+  const [zoneOffsets, setZoneOffsets] = useState({}); // { buildingType: { x: offset, y: offset } }
   
   // Drag/pan state
   const [isDragging, setIsDragging] = useState(false);
@@ -168,6 +171,18 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   }, [islandScale]);
 
   const handleMouseMove = useCallback((e) => {
+    // Handle zone dragging in debug mode
+    if (debugMode && draggingZone) {
+      const deltaX = e.clientX - zoneDragStart.x;
+      const deltaY = e.clientY - zoneDragStart.y;
+      
+      setZoneOffsets(prev => ({
+        ...prev,
+        [draggingZone]: { x: deltaX, y: deltaY }
+      }));
+      return;
+    }
+    
     if (!isDragging) return;
     
     // Calculate the delta (how much the mouse moved)
@@ -195,11 +210,14 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       x: e.clientX,
       y: e.clientY,
     });
-  }, [isDragging, dragStart, islandPosition, getImageLimits]);
+  }, [isDragging, dragStart, islandPosition, getImageLimits, debugMode, draggingZone, zoneDragStart]);
 
   const handleMouseUp = useCallback(() => {
+    if (draggingZone) {
+      setDraggingZone(null);
+    }
     setIsDragging(false);
-  }, []);
+  }, [draggingZone]);
 
   // Touch handlers for mobile
   const handleTouchStart = useCallback((e) => {
@@ -530,11 +548,125 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
           )}
           
           {/* Last click */}
-          {lastClickPos && !currentPosition && !desiredPosition && (
+          {lastClickPos && !currentPosition && !desiredPosition && Object.keys(zoneOffsets).length === 0 && (
             <div style={{ marginTop: '12px', color: '#fff', fontSize: '11px' }}>
               Last click:<br/>
               left: {lastClickPos.x}%<br/>
               top: {lastClickPos.y}%
+            </div>
+          )}
+          
+          {/* Dragged zones - show new positions */}
+          {Object.entries(zoneOffsets).map(([buildingType, offset]) => {
+            if (offset.x === 0 && offset.y === 0) return null;
+            
+            const position = BUILDING_POSITIONS[buildingType];
+            if (!position) return null;
+            
+            // Calculate new position in percentages
+            const container = islandContainerRef.current;
+            if (!container) return null;
+            
+            const rect = container.getBoundingClientRect();
+            const viewportWidth = rect.width;
+            const viewportHeight = rect.height;
+            const imageRatio = 5000 / 3500;
+            const viewportRatio = viewportWidth / viewportHeight;
+            
+            let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
+            if (viewportRatio > imageRatio) {
+              displayedHeight = viewportHeight;
+              displayedWidth = displayedHeight * imageRatio;
+              offsetX = (viewportWidth - displayedWidth) / 2;
+            } else {
+              displayedWidth = viewportWidth;
+              displayedHeight = displayedWidth / imageRatio;
+              offsetY = (viewportHeight - displayedHeight) / 2;
+            }
+            
+            // Current zone position in pixels (from container)
+            const zoneLeftPercent = parseFloat(position.zone.left);
+            const zoneTopPercent = parseFloat(position.zone.top);
+            const zoneLeftPx = (zoneLeftPercent / 100) * displayedWidth;
+            const zoneTopPx = (zoneTopPercent / 100) * displayedHeight;
+            
+            // Add drag offset (in viewport pixels) and convert to percentage of displayed image
+            // The offset is in viewport pixels, we need to convert it to image pixels
+            // First, get the zone's current position in viewport pixels
+            const zoneLeftViewportPx = offsetX + zoneLeftPx;
+            const zoneTopViewportPx = offsetY + zoneTopPx;
+            
+            // Add the drag offset (already in viewport pixels)
+            const newLeftViewportPx = zoneLeftViewportPx + offset.x;
+            const newTopViewportPx = zoneTopViewportPx + offset.y;
+            
+            // Convert back to image-relative pixels
+            const newLeftImagePx = newLeftViewportPx - offsetX;
+            const newTopImagePx = newTopViewportPx - offsetY;
+            
+            // Convert to percentage of displayed image
+            const newLeftPercent = (newLeftImagePx / displayedWidth) * 100;
+            const newTopPercent = (newTopImagePx / displayedHeight) * 100;
+            
+            return (
+              <div key={buildingType} style={{ marginTop: '12px', padding: '8px', background: 'rgba(100, 150, 255, 0.2)', borderRadius: '4px', border: '1px solid #6495ed' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#6495ed' }}>Nouvelle position ({buildingType}):</div>
+                <div style={{ color: '#fff', fontSize: '11px' }}>
+                  left: {newLeftPercent.toFixed(2)}%<br/>
+                  top: {newTopPercent.toFixed(2)}%
+                </div>
+                <button
+                  onClick={() => {
+                    const code = `  ${buildingType}: {\n    x: ${position.x},\n    y: ${position.y},\n    description: '${position.description}',\n    zone: {\n      left: '${newLeftPercent.toFixed(2)}%',\n      top: '${newTopPercent.toFixed(2)}%',\n      width: '${position.zone.width}',\n      height: '${position.zone.height}',\n    },\n  },`;
+                    navigator.clipboard.writeText(code).then(() => {
+                      alert('Code copié dans le presse-papier !');
+                    });
+                  }}
+                  style={{
+                    marginTop: '6px',
+                    padding: '4px 8px',
+                    background: '#6495ed',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  📋 Copier code
+                </button>
+                <button
+                  onClick={() => {
+                    setZoneOffsets(prev => {
+                      const newOffsets = { ...prev };
+                      delete newOffsets[buildingType];
+                      return newOffsets;
+                    });
+                  }}
+                  style={{
+                    marginTop: '6px',
+                    marginLeft: '6px',
+                    padding: '4px 8px',
+                    background: 'rgba(255, 100, 100, 0.3)',
+                    color: '#ff6464',
+                    border: '1px solid #ff6464',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ✕ Reset
+                </button>
+              </div>
+            );
+          })}
+          
+          {/* Instructions */}
+          {debugMode && (
+            <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(100, 100, 100, 0.2)', borderRadius: '4px', fontSize: '10px', color: '#aaa' }}>
+              💡 En mode debug, vous pouvez drag & drop les zones directement sur l'image
             </div>
           )}
         </div>
@@ -635,11 +767,37 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
               };
             }
             
+            // Calculate final zone position with drag offset
+            const offset = zoneOffsets[buildingType] || { x: 0, y: 0 };
+            const finalZoneStyle = debugMode && (offset.x !== 0 || offset.y !== 0) ? {
+              ...zoneStyle,
+              transform: `translate(${offset.x}px, ${offset.y}px)`,
+              cursor: draggingZone === buildingType ? 'grabbing' : 'move',
+              zIndex: draggingZone === buildingType ? 1000 : 100,
+            } : {
+              ...zoneStyle,
+              cursor: debugMode ? 'move' : zoneStyle.cursor,
+            };
+            
             return (
               <div
                 key={buildingType}
-                className={`building-zone ${isBuilt ? 'built' : ''} ${isHovered ? 'hovered' : ''} ${isPlacing ? 'placing' : ''}`}
-                style={zoneStyle}
+                className={`building-zone ${isBuilt ? 'built' : ''} ${isHovered ? 'hovered' : ''} ${isPlacing ? 'placing' : ''} ${debugMode ? 'debug-draggable' : ''}`}
+                style={finalZoneStyle}
+                onMouseDown={(e) => {
+                  if (debugMode) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setDraggingZone(buildingType);
+                    const currentOffset = zoneOffsets[buildingType] || { x: 0, y: 0 };
+                    setZoneDragStart({
+                      x: e.clientX - currentOffset.x,
+                      y: e.clientY - currentOffset.y,
+                    });
+                  } else {
+                    e.stopPropagation();
+                  }
+                }}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent drag when clicking on zone
                   
