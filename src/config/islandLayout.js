@@ -65,10 +65,9 @@ export const BUILDING_POSITIONS = {
     x: 3,
     y: 6,
     description: 'Southwest, near large rocks',
-    // Positioned near the sandy beach area with rocks (bottom-left)
     zone: {
-      left: '15%',
-      top: '68%',
+      left: '61.01%',
+      top: '36.64%',
       width: '6%',
       height: '7%',
     },
