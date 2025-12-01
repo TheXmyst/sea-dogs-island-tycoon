@@ -22,10 +22,10 @@ export const BUILDING_POSITIONS = {
     y: 2,
     description: 'Center-north, near the large tree',
     // Zone coordinates as percentage of island image (for visual overlay)
-    // Smaller zones, no borders - positions to be adjusted based on new image
+    // Updated with improved debug coordinates
     zone: {
-      left: '38%',
-      top: '18%',
+      left: '51.30%',
+      top: '47.47%',
       width: '6%',
       height: '6%',
     },
@@ -34,10 +34,10 @@ export const BUILDING_POSITIONS = {
     x: 9,
     y: 7,
     description: 'Southeast, at the dock location',
-    // Positioned based on debug coordinates
+    // Updated with improved debug coordinates
     zone: {
-      left: '23.43%',
-      top: '74.35%',
+      left: '5.28%',
+      top: '76.47%',
       width: '6%',
       height: '6%',
     },
@@ -46,10 +46,10 @@ export const BUILDING_POSITIONS = {
     x: 2,
     y: 4,
     description: 'West side, near rocks',
-    // Positioned based on debug coordinates
+    // Updated with improved debug coordinates
     zone: {
-      left: '72.42%',
-      top: '55.74%',
+      left: '77.38%',
+      top: '55.73%',
       width: '6%',
       height: '6%',
     },
@@ -58,7 +58,7 @@ export const BUILDING_POSITIONS = {
     x: 1,
     y: 2,
     description: 'Northwest, near vegetation',
-    // Positioned based on debug coordinates (bucheron)
+    // Positioned based on debug coordinates (bucheron) - keeping previous value
     zone: {
       left: '50.37%',
       top: '32.47%',
@@ -82,10 +82,10 @@ export const BUILDING_POSITIONS = {
     x: 6,
     y: 5,
     description: 'Center, along the path',
-    // Positioned based on debug coordinates
+    // Updated with improved debug coordinates
     zone: {
-      left: '56.02%',
-      top: '70.11%',
+      left: '56.93%',
+      top: '67.80%',
       width: '6%',
       height: '6%',
     },
@@ -94,10 +94,10 @@ export const BUILDING_POSITIONS = {
     x: 8,
     y: 3,
     description: 'Northeast, near the path',
-    // Positioned based on debug coordinates
+    // Updated with improved debug coordinates
     zone: {
-      left: '40.36%',
-      top: '55.64%',
+      left: '38.95%',
+      top: '53.15%',
       width: '6%',
       height: '6%',
     },
