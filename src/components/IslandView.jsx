@@ -19,9 +19,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
   const [islandScale, setIslandScale] = useState(1);
   const islandContainerRef = useRef(null);
   
-  // Touch state for mobile
-  const [touchStart, setTouchStart] = useState(null);
-  const [lastTouchDistance, setLastTouchDistance] = useState(null);
+  // Touch state for mobile - use refs for immediate access
+  const touchStartRef = useRef(null);
+  const lastTouchDistanceRef = useRef(null);
+  const isDraggingTouchRef = useRef(false);
 
   const handleSelectBuilding = (buildingId) => {
     setPlacingBuilding(buildingId);
@@ -125,8 +126,9 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
     if (e.touches.length === 1) {
       // Single touch - start pan
       const touch = e.touches[0];
+      isDraggingTouchRef.current = true;
       setIsDragging(true);
-      setTouchStart({ x: touch.clientX, y: touch.clientY });
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       setDragStart({
         x: touch.clientX - islandPosition.x,
         y: touch.clientY - islandPosition.y,
@@ -139,14 +141,15 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      setLastTouchDistance(distance);
+      lastTouchDistanceRef.current = distance;
+      isDraggingTouchRef.current = false;
       setIsDragging(false);
     }
     e.preventDefault();
   }, [islandPosition]);
 
   const handleTouchMove = useCallback((e) => {
-    if (e.touches.length === 1 && isDragging && touchStart) {
+    if (e.touches.length === 1 && isDraggingTouchRef.current && touchStartRef.current) {
       // Single touch - pan
       const touch = e.touches[0];
       let newX = touch.clientX - dragStart.x;
@@ -178,7 +181,7 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       }
       
       setIslandPosition({ x: newX, y: newY });
-    } else if (e.touches.length === 2 && lastTouchDistance) {
+    } else if (e.touches.length === 2 && lastTouchDistanceRef.current) {
       // Two touches - pinch zoom
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
@@ -186,10 +189,10 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      const scaleChange = distance / lastTouchDistance;
+      const scaleChange = distance / lastTouchDistanceRef.current;
       const newScale = Math.max(0.8, Math.min(1.5, islandScale * scaleChange));
       setIslandScale(newScale);
-      setLastTouchDistance(distance);
+      lastTouchDistanceRef.current = distance;
       
       // Re-clamp position after zoom
       const container = islandContainerRef.current;
@@ -225,12 +228,13 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
       }
     }
     e.preventDefault();
-  }, [isDragging, touchStart, dragStart, islandScale, lastTouchDistance]);
+  }, [dragStart, islandScale]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
-    setTouchStart(null);
-    setLastTouchDistance(null);
+    isDraggingTouchRef.current = false;
+    touchStartRef.current = null;
+    lastTouchDistanceRef.current = null;
   }, []);
 
   // Handle wheel zoom
