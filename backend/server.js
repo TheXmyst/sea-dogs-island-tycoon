@@ -307,6 +307,19 @@ async function initializeDatabase() {
         }
       }
       
+      // Run sea system migration
+      const addSeaSystemPath = path.join(__dirname, 'migrations', 'add_sea_system.sql');
+      try {
+        const addSeaSystemSQL = fs.readFileSync(addSeaSystemPath, 'utf8');
+        await pool.query(addSeaSystemSQL);
+        console.log('✅ Sea system tables and columns added/verified');
+      } catch (addSeaSystemError) {
+        // Migration file might not exist, that's okay
+        if (addSeaSystemError.code !== 'ENOENT') {
+          console.log('ℹ️  Sea system migration:', addSeaSystemError.message);
+        }
+      }
+      
       console.log('✅ Data will persist across deployments');
     } catch (migrationError) {
       // If file doesn't exist, create tables manually
