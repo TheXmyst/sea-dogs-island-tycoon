@@ -1,0 +1,260 @@
+.sea-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.sea-loading,
+.sea-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text);
+  font-size: 18px;
+}
+
+.sea-error button {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: var(--color-gold);
+  color: var(--color-ocean-dark);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sea-header {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  border-bottom: 2px solid var(--color-gold);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.sea-header h2 {
+  margin: 0;
+  color: var(--color-gold);
+  font-size: 24px;
+}
+
+.sea-info {
+  display: flex;
+  gap: 24px;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.selected-ship {
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.sea-controls {
+  position: absolute;
+  top: 80px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 20;
+}
+
+.sea-controls button {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.sea-controls button:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--color-gold);
+}
+
+.sea-map-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+}
+
+.sea-map-container:active {
+  cursor: grabbing;
+}
+
+.sea-map {
+  width: 2000px;
+  height: 2000px;
+  position: relative;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  transform-origin: 0 0;
+}
+
+.island-marker {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.island-marker:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  z-index: 100;
+}
+
+.island-marker.player-island {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.8));
+}
+
+.island-marker.selected {
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 1));
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+.island-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--color-text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-top: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.event-marker {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.event-marker:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+  z-index: 100;
+}
+
+.event-marker.selected {
+  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1));
+  transform: translate(-50%, -50%) scale(1.4);
+  animation: none;
+}
+
+.event-marker.event-pvp {
+  filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.8));
+}
+
+.event-marker.event-pve {
+  filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.8));
+}
+
+.event-marker.event-treasure {
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+}
+
+.event-marker.event-raid {
+  filter: drop-shadow(0 0 8px rgba(128, 0, 128, 0.8));
+}
+
+.event-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--color-gold);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  margin-top: 4px;
+  border: 1px solid var(--color-gold);
+  font-weight: 600;
+}
+
+.sea-target-info {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--color-gold);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 300px;
+  max-width: 500px;
+  z-index: 30;
+  color: var(--color-text);
+}
+
+.sea-target-info h3 {
+  margin: 0 0 12px 0;
+  color: var(--color-gold);
+  font-size: 18px;
+}
+
+.sea-target-info p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.navigate-button {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: var(--color-gold);
+  color: var(--color-ocean-dark);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.navigate-button:hover {
+  background: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+

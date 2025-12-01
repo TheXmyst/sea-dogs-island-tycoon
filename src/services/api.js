@@ -162,6 +162,28 @@ export const authAPI = {
 };
 
 /**
+ * Sea System API
+ */
+export const seaAPI = {
+  async assignPlayerToSea(playerId) {
+    return await apiRequest(`/api/sea/assign/${playerId}`, {
+      method: 'POST',
+    });
+  },
+
+  async getSeaMap(seaId) {
+    return await apiRequest(`/api/sea/map/${seaId}`);
+  },
+
+  async calculateDistance(x1, y1, x2, y2) {
+    return await apiRequest('/api/sea/distance', {
+      method: 'POST',
+      body: JSON.stringify({ x1, y1, x2, y2 }),
+    });
+  },
+};
+
+/**
  * Game state API
  */
 export const gameAPI = {

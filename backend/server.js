@@ -705,6 +705,55 @@ app.post('/api/players/register', async (req, res) => {
     
     const player = result.rows[0];
     
+    // Assign player to a sea (if PostgreSQL available)
+    if (pool && !useInMemoryDB) {
+      try {
+        // Check if player already has a sea
+        const checkSea = await pool.query(
+          'SELECT sea_id FROM players WHERE id = $1',
+          [player.id]
+        );
+        
+        if (!checkSea.rows[0]?.sea_id) {
+          // Find or create sea
+          let seaResult = await pool.query(
+            `SELECT id FROM seas
+             WHERE is_active = TRUE AND current_islands < max_islands
+               AND EXISTS (SELECT 1 FROM players WHERE sea_id = seas.id)
+             ORDER BY current_islands ASC LIMIT 1`
+          );
+          
+          let seaId;
+          if (seaResult.rows.length === 0) {
+            const newSea = await pool.query(
+              `INSERT INTO seas (name, current_islands, is_active)
+               VALUES ($1, 0, TRUE) RETURNING id`,
+              [`Sea ${Date.now()}`]
+            );
+            seaId = newSea.rows[0].id;
+          } else {
+            seaId = seaResult.rows[0].id;
+          }
+          
+          const positionX = Math.floor(Math.random() * 1000);
+          const positionY = Math.floor(Math.random() * 1000);
+          
+          await pool.query(
+            `UPDATE players SET sea_id = $1, island_position_x = $2, island_position_y = $3 WHERE id = $4`,
+            [seaId, positionX, positionY, player.id]
+          );
+          
+          await pool.query(
+            `UPDATE seas SET current_islands = current_islands + 1 WHERE id = $1`,
+            [seaId]
+          );
+        }
+      } catch (seaError) {
+        console.warn('Failed to assign sea on registration:', seaError);
+        // Continue anyway - sea assignment can happen later
+      }
+    }
+    
     // Parse JSON fields
     const parseJSONB = (field) => {
       if (field === null || field === undefined) return null;
@@ -1535,6 +1584,217 @@ app.post('/api/debug/update-building-position', async (req, res) => {
     });
   } catch (error) {
     console.error('Update building position error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Sea System Routes
+// Assign player to a sea (called on registration or first login)
+app.post('/api/sea/assign/:playerId', async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    
+    if (useInMemoryDB) {
+      return res.status(500).json({ success: false, error: 'Sea system requires PostgreSQL' });
+    }
+    
+    if (!pool) {
+      return res.status(500).json({ success: false, error: 'Database not available' });
+    }
+    
+    // Check if player already has a sea assigned
+    const checkResult = await pool.query(
+      'SELECT sea_id, island_position_x, island_position_y FROM players WHERE id = $1',
+      [playerId]
+    );
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Player not found' });
+    }
+    
+    const player = checkResult.rows[0];
+    
+    // If already assigned, return current assignment
+    if (player.sea_id) {
+      return res.json({
+        success: true,
+        seaId: player.sea_id,
+        position: {
+          x: player.island_position_x,
+          y: player.island_position_y,
+        },
+      });
+    }
+    
+    // Find a sea with at least one player and space available
+    let seaResult = await pool.query(
+      `SELECT id, name, current_islands, max_islands
+       FROM seas
+       WHERE is_active = TRUE 
+         AND current_islands < max_islands
+         AND EXISTS (
+             SELECT 1 FROM players 
+             WHERE sea_id = seas.id 
+             AND id != $1
+         )
+       ORDER BY current_islands ASC
+       LIMIT 1`,
+      [playerId]
+    );
+    
+    let seaId;
+    
+    // If no suitable sea found, create a new one
+    if (seaResult.rows.length === 0) {
+      const newSeaResult = await pool.query(
+        `INSERT INTO seas (name, current_islands, is_active)
+         VALUES ($1, 0, TRUE)
+         RETURNING id, name`,
+        [`Sea ${Date.now()}`]
+      );
+      seaId = newSeaResult.rows[0].id;
+    } else {
+      seaId = seaResult.rows[0].id;
+    }
+    
+    // Generate random position (0-1000 range)
+    const positionX = Math.floor(Math.random() * 1000);
+    const positionY = Math.floor(Math.random() * 1000);
+    
+    // Assign player to sea
+    await pool.query(
+      `UPDATE players
+       SET sea_id = $1,
+           island_position_x = $2,
+           island_position_y = $3
+       WHERE id = $4`,
+      [seaId, positionX, positionY, playerId]
+    );
+    
+    // Update sea island count
+    await pool.query(
+      `UPDATE seas
+       SET current_islands = current_islands + 1
+       WHERE id = $1`,
+      [seaId]
+    );
+    
+    res.json({
+      success: true,
+      seaId,
+      position: { x: positionX, y: positionY },
+    });
+  } catch (error) {
+    console.error('Assign sea error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get sea map with all islands and events
+app.get('/api/sea/map/:seaId', async (req, res) => {
+  try {
+    const { seaId } = req.params;
+    
+    if (useInMemoryDB) {
+      return res.status(500).json({ success: false, error: 'Sea system requires PostgreSQL' });
+    }
+    
+    if (!pool) {
+      return res.status(500).json({ success: false, error: 'Database not available' });
+    }
+    
+    // Get sea info
+    const seaResult = await pool.query(
+      'SELECT id, name, max_islands, current_islands FROM seas WHERE id = $1',
+      [seaId]
+    );
+    
+    if (seaResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Sea not found' });
+    }
+    
+    const sea = seaResult.rows[0];
+    
+    // Get all islands (players) in this sea
+    const islandsResult = await pool.query(
+      `SELECT id, username, island_position_x, island_position_y, 
+              (SELECT COUNT(*) FROM players p2 WHERE p2.sea_id = $1) as total_players
+       FROM players
+       WHERE sea_id = $1
+       ORDER BY username`,
+      [seaId]
+    );
+    
+    const islands = islandsResult.rows.map(row => ({
+      playerId: row.id,
+      username: row.username,
+      position: {
+        x: row.island_position_x,
+        y: row.island_position_y,
+      },
+    }));
+    
+    // Get all active events in this sea
+    const eventsResult = await pool.query(
+      `SELECT id, event_type, name, description, position_x, position_y,
+              required_level, rewards, expires_at, max_participants, current_participants
+       FROM sea_events
+       WHERE sea_id = $1 AND is_active = TRUE
+       ORDER BY spawn_time DESC`,
+      [seaId]
+    );
+    
+    const events = eventsResult.rows.map(row => ({
+      id: row.id,
+      type: row.event_type,
+      name: row.name,
+      description: row.description,
+      position: {
+        x: row.position_x,
+        y: row.position_y,
+      },
+      requiredLevel: row.required_level,
+      rewards: row.rewards,
+      expiresAt: row.expires_at ? new Date(row.expires_at).getTime() : null,
+      maxParticipants: row.max_participants,
+      currentParticipants: row.current_participants,
+    }));
+    
+    res.json({
+      success: true,
+      sea: {
+        id: sea.id,
+        name: sea.name,
+        maxIslands: sea.max_islands,
+        currentIslands: sea.current_islands,
+      },
+      islands,
+      events,
+    });
+  } catch (error) {
+    console.error('Get sea map error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Calculate distance between two points
+app.post('/api/sea/distance', async (req, res) => {
+  try {
+    const { x1, y1, x2, y2 } = req.body;
+    
+    if (typeof x1 !== 'number' || typeof y1 !== 'number' || 
+        typeof x2 !== 'number' || typeof y2 !== 'number') {
+      return res.status(400).json({ success: false, error: 'Invalid coordinates' });
+    }
+    
+    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    
+    res.json({
+      success: true,
+      distance: Math.round(distance * 100) / 100, // Round to 2 decimals
+    });
+  } catch (error) {
+    console.error('Calculate distance error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

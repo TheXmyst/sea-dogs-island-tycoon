@@ -12,7 +12,7 @@ import IslandView from './components/IslandView';
 import ShipManager from './components/ShipManager';
 import CaptainManager from './components/CaptainManager';
 import GachaSystem from './components/GachaSystem';
-import BattleSystem from './components/BattleSystem';
+import SeaView from './components/SeaView';
 import EventSystem from './components/EventSystem';
 import TechnologyTree from './components/TechnologyTree';
 import CrewRecruitment from './components/CrewRecruitment';
@@ -33,7 +33,7 @@ const TABS = {
   CAPTAINS: 'captains',
   RECRUITMENT: 'recruitment',
   EVENTS: 'events',
-  BATTLE: 'battle',
+  SEA: 'sea', // Replaced BATTLE with SEA
   ALLIANCE: 'alliance',
   LEADERBOARD: 'leaderboard',
   SYSTEM: 'system',
@@ -1015,12 +1015,12 @@ export default function App() {
             onEventComplete={handleEventComplete}
           />
         );
-      case TABS.BATTLE:
+      case TABS.SEA:
         return (
-          <BattleSystem
+          <SeaView
             gameState={gameState}
+            userId={userId}
             selectedShip={selectedShip}
-            onBattleComplete={handleBattleComplete}
           />
         );
       case TABS.ALLIANCE:

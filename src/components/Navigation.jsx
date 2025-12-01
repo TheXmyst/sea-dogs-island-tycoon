@@ -10,7 +10,7 @@ export default function Navigation({ currentTab, onTabChange }) {
     { id: 'captains', label: 'Captains', icon: '⭐', shortLabel: 'Captains' },
     { id: 'recruitment', label: 'Recruit', icon: '🎰', shortLabel: 'Recruit' },
     { id: 'events', label: 'Events', icon: '📅', shortLabel: 'Events' },
-    { id: 'battle', label: 'Battle', icon: '⚔️', shortLabel: 'Battle' },
+    { id: 'sea', label: 'Sea', icon: '🌊', shortLabel: 'Sea' },
     { id: 'alliance', label: 'Alliance', icon: '🤝', shortLabel: 'Alliance' },
     { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', shortLabel: 'Rank' },
     { id: 'system', label: 'System', icon: '📋', shortLabel: 'System' },
