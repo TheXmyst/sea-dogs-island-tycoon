@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { showSuccess, showError } from '../utils/notifications';
+import { useTranslation } from '../i18n/LanguageContext';
 import './AuthModal.css';
 
 export default function AuthModal({ onLogin, onRegister, onClose, canClose = true }) {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,13 +22,13 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
       } else {
         // Validate password confirmation
         if (password !== confirmPassword) {
-          showError('Les mots de passe ne correspondent pas');
+          showError(t('auth.passwordsDoNotMatch'));
           setLoading(false);
           return;
         }
         // Email is now required for registration
         if (!email || email.trim().length === 0) {
-          showError('L\'email est obligatoire');
+          showError(t('auth.emailRequired'));
           setLoading(false);
           return;
         }
@@ -34,13 +36,13 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
       }
     } catch (error) {
       // Show more detailed error message
-      const errorMessage = error.message || 'Authentication failed';
+      const errorMessage = error.message || t('auth.authenticationFailed');
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Cannot connect')) {
         const isProd = import.meta.env.PROD || window.location.hostname !== 'localhost';
         if (isProd) {
-          showError('Cannot connect to backend server. Please check that VITE_API_URL is configured in Vercel and backend is deployed on Railway.');
+          showError(t('auth.cannotConnectProduction'));
         } else {
-          showError('Cannot connect to server. Please make sure the backend is running: cd backend && npm run dev');
+          showError(t('auth.cannotConnect'));
         }
       } else {
         showError(errorMessage);
@@ -55,11 +57,11 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         {canClose && <button className="auth-modal-close" onClick={onClose}>×</button>}
         
-        <h2>{isLogin ? '🏴‍☠️ Login' : '🏴‍☠️ Register'}</h2>
+        <h2>{isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}</h2>
         
         <form onSubmit={handleSubmit}>
           <div className="auth-form-group">
-            <label>Username</label>
+            <label>{t('auth.username')}</label>
             <input
               type="text"
               value={username}
@@ -67,49 +69,49 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
               required
               minLength={3}
               maxLength={20}
-              placeholder="Enter your username"
+              placeholder={t('auth.enterUsername')}
             />
           </div>
 
           {!isLogin && (
             <div className="auth-form-group">
-              <label>Email</label>
+              <label>{t('auth.email')}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="your@email.com"
+                placeholder={t('auth.enterEmail')}
               />
             </div>
           )}
 
           <div className="auth-form-group">
-            <label>Password</label>
+            <label>{t('auth.password')}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              placeholder="Enter your password"
+              placeholder={t('auth.enterPassword')}
             />
           </div>
 
           {!isLogin && (
             <div className="auth-form-group">
-              <label>Confirm Password</label>
+              <label>{t('auth.confirmPassword')}</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
-                placeholder="Confirm your password"
+                placeholder={t('auth.confirmPassword')}
               />
               {confirmPassword && password !== confirmPassword && (
                 <span className="auth-error-text" style={{ color: '#ff4444', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
-                  Les mots de passe ne correspondent pas
+                  {t('auth.passwordsDoNotMatch')}
                 </span>
               )}
             </div>
@@ -120,13 +122,13 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
             className="auth-submit-button"
             disabled={loading || !username || !password || (!isLogin && (!email || password !== confirmPassword))}
           >
-            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Register')}
+            {loading ? t('common.loading') : (isLogin ? t('auth.login') : t('auth.register'))}
           </button>
         </form>
 
         <div className="auth-switch">
           <p>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            {isLogin ? t('auth.dontHaveAccount') : t('auth.alreadyHaveAccount')}
             <button 
               type="button"
               className="auth-switch-button"
@@ -138,7 +140,7 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
                 setEmail('');
               }}
             >
-              {isLogin ? 'Register' : 'Login'}
+              {isLogin ? t('auth.register') : t('auth.login')}
             </button>
           </p>
         </div>

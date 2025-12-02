@@ -1,19 +1,22 @@
 import React from 'react';
+import { useTranslation } from '../i18n/LanguageContext';
 import './Navigation.css';
 
 export default function Navigation({ currentTab, onTabChange }) {
+  const { t } = useTranslation();
+  
   const tabs = [
-    { id: 'island', label: 'Island', icon: '🏝️', shortLabel: 'Island' },
-    { id: 'fleet', label: 'Fleet', icon: '⚓', shortLabel: 'Fleet' },
-    { id: 'technology', label: 'Tech', icon: '🔬', shortLabel: 'Tech' },
-    { id: 'crew', label: 'Crew', icon: '👥', shortLabel: 'Crew' },
-    { id: 'captains', label: 'Captains', icon: '⭐', shortLabel: 'Captains' },
-    { id: 'recruitment', label: 'Recruit', icon: '🎰', shortLabel: 'Recruit' },
-    { id: 'events', label: 'Events', icon: '📅', shortLabel: 'Events' },
-    { id: 'sea', label: 'Sea', icon: '🌊', shortLabel: 'Sea' },
-    { id: 'alliance', label: 'Alliance', icon: '🤝', shortLabel: 'Alliance' },
-    { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', shortLabel: 'Rank' },
-    { id: 'system', label: 'System', icon: '📋', shortLabel: 'System' },
+    { id: 'island', icon: '🏝️', labelKey: 'nav.island', shortLabelKey: 'nav.islandShort' },
+    { id: 'fleet', icon: '⚓', labelKey: 'nav.fleet', shortLabelKey: 'nav.fleetShort' },
+    { id: 'technology', icon: '🔬', labelKey: 'nav.technology', shortLabelKey: 'nav.technologyShort' },
+    { id: 'crew', icon: '👥', labelKey: 'nav.crew', shortLabelKey: 'nav.crewShort' },
+    { id: 'captains', icon: '⭐', labelKey: 'nav.captains', shortLabelKey: 'nav.captainsShort' },
+    { id: 'recruitment', icon: '🎰', labelKey: 'nav.recruitment', shortLabelKey: 'nav.recruitmentShort' },
+    { id: 'events', icon: '📅', labelKey: 'nav.events', shortLabelKey: 'nav.eventsShort' },
+    { id: 'sea', icon: '🌊', labelKey: 'nav.sea', shortLabelKey: 'nav.seaShort' },
+    { id: 'alliance', icon: '🤝', labelKey: 'nav.alliance', shortLabelKey: 'nav.allianceShort' },
+    { id: 'leaderboard', icon: '🏆', labelKey: 'nav.leaderboard', shortLabelKey: 'nav.leaderboardShort' },
+    { id: 'system', icon: '📋', labelKey: 'nav.system', shortLabelKey: 'nav.systemShort' },
   ];
   
   return (
@@ -23,10 +26,10 @@ export default function Navigation({ currentTab, onTabChange }) {
           key={tab.id}
           className={`nav-item ${currentTab === tab.id ? 'active' : ''}`}
           onClick={() => onTabChange(tab.id)}
-          title={tab.label}
+          title={t(tab.labelKey)}
         >
           <span className="nav-icon">{tab.icon}</span>
-          <span className="nav-label">{tab.shortLabel}</span>
+          <span className="nav-label">{t(tab.shortLabelKey)}</span>
         </button>
       ))}
     </nav>

@@ -23,6 +23,7 @@ import Leaderboard from './components/Leaderboard';
 import SystemLog from './components/SystemLog';
 import DevTools from './components/DevTools';
 import { setNotificationCallback, showSuccess, showError, showInfo } from './utils/notifications';
+import { useTranslation } from './i18n/LanguageContext';
 import './App.css';
 
 const TABS = {
@@ -40,6 +41,7 @@ const TABS = {
 };
 
 export default function App() {
+  const { t } = useTranslation();
   // Initialize with empty state - will be loaded after auth check
   const [gameState, setGameState] = useState(() => getInitialGameState());
   const [currentTab, setCurrentTab] = useState(TABS.ISLAND);
@@ -1027,9 +1029,9 @@ export default function App() {
       case TABS.ALLIANCE:
         return (
           <div className="stub-content">
-            <h2>🤝 Alliances</h2>
-            <p>Form alliances with other players to strengthen your position!</p>
-            <p className="coming-soon">Coming soon...</p>
+            <h2>🤝 {t('alliance.create')}</h2>
+            <p>{t('alliance.description')}</p>
+            <p className="coming-soon">{t('alliance.comingSoon')}</p>
           </div>
         );
       case TABS.LEADERBOARD:
