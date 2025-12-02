@@ -128,43 +128,25 @@ const corsOptions = {
   maxAge: 86400, // Cache preflight requests for 24 hours
 };
 
+// TEMPORAIRE: CORS simplifié pour debug - accepter toutes les origines
+// TODO: Remettre la configuration sécurisée une fois que ça fonctionne
 app.use((req, res, next) => {
-  console.log(`   🔵 Before CORS middleware`);
-  console.log(`   🔵 Origin validation test:`, {
-    origin: req.headers.origin || 'none',
-    isProduction,
-    frontendUrl,
-    validateResult: validateOrigin(req.headers.origin)
-  });
+  console.log(`   🔵 CORS: Setting headers manually`);
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log(`   🔵 CORS: Handling OPTIONS preflight`);
+    return res.status(200).end();
+  }
+  
+  console.log(`   ✅ CORS: Headers set, calling next()`);
   next();
-  console.log(`   🔵 After CORS middleware (should not see this if response sent)`);
 });
-
-// Wrapper CORS pour debug
-const corsMiddleware = cors(corsOptions);
-app.use((req, res, next) => {
-  console.log(`   🔵 About to call CORS middleware`);
-  const originalEnd = res.end;
-  res.end = function(...args) {
-    console.log(`   ⚠️  CORS sent response! Status: ${res.statusCode}`);
-    return originalEnd.apply(this, args);
-  };
-  corsMiddleware(req, res, (err) => {
-    if (err) {
-      console.error(`   ❌ CORS error:`, err);
-      return next(err);
-    }
-    console.log(`   ✅ CORS middleware called next() successfully`);
-    next();
-  });
-});
-
-app.use((req, res, next) => {
-  console.log(`   🟢 After CORS middleware - calling next`);
-  next();
-  console.log(`   🟢 After CORS next() (should not see this if response sent)`);
-});
-console.log('✅ CORS middleware configured');
+console.log('✅ CORS middleware configured (simplified for debugging)');
 
 // Limiter la taille du body JSON (protection contre DoS)
 app.use((req, res, next) => {
