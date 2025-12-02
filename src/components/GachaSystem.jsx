@@ -55,7 +55,13 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
       const fullCaptain = captainConfig ? {
         ...result.captain,
         ...captainConfig,
-      } : result.captain;
+        // Ensure portrait exists
+        portrait: captainConfig.portrait || result.captain.portrait || '👤',
+      } : {
+        ...result.captain,
+        // Fallback portrait if no config found
+        portrait: result.captain.portrait || '👤',
+      };
       
       // Update game state with server response
       onPullComplete({
@@ -297,7 +303,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             
             <div className="result-body">
               <div className="captain-portrait-large">
-                {lastResult.captain.portrait.startsWith('/') ? (
+                {lastResult.captain.portrait && typeof lastResult.captain.portrait === 'string' && lastResult.captain.portrait.startsWith('/') ? (
                   <img 
                     src={lastResult.captain.portrait} 
                     alt={lastResult.captain.name}
@@ -307,7 +313,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                     }}
                   />
                 ) : (
-                  <span>{lastResult.captain.portrait}</span>
+                  <span>{lastResult.captain.portrait || '👤'}</span>
                 )}
               </div>
               <h3>{lastResult.captain.name}</h3>
@@ -393,7 +399,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                       {result.duplicate && <span className="duplicate-badge">⭐ Duplicate</span>}
                     </div>
                     <div className="result-item-portrait">
-                      {result.captain.portrait.startsWith('/') ? (
+                      {result.captain.portrait && typeof result.captain.portrait === 'string' && result.captain.portrait.startsWith('/') ? (
                         <img 
                           src={result.captain.portrait} 
                           alt={result.captain.name}
@@ -403,7 +409,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                           }}
                         />
                       ) : (
-                        <span className="result-item-emoji">{result.captain.portrait}</span>
+                        <span className="result-item-emoji">{result.captain.portrait || '👤'}</span>
                       )}
                     </div>
                     <div className="result-item-name">{result.captain.name}</div>
