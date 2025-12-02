@@ -16,6 +16,10 @@
   backdrop-filter: blur(1px);
 }
 
+.auth-modal-overlay.auth-modal-register {
+  padding-bottom: 3%;
+}
+
 .auth-modal-overlay::before {
   content: '';
   position: absolute;
