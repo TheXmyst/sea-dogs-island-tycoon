@@ -95,15 +95,31 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, var(--color-ocean-dark) 0%, var(--color-ocean-darker) 100%);
+  background-image: url('/title.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
+.auth-required-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
 .auth-required-content {
   text-align: center;
+  position: relative;
+  z-index: 2;
   color: var(--color-text);
   padding: 40px;
   max-width: 600px;
