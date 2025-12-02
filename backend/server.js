@@ -72,7 +72,11 @@ const frontendUrl = process.env.FRONTEND_URL;
 
 // Fonction pour valider l'origine (support Vercel avec plusieurs domaines)
 const validateOrigin = (origin) => {
-  if (!origin) return false;
+  // Accepter les requêtes sans origine (ex: curl, Railway healthcheck, Postman)
+  // Ces requêtes sont généralement des outils de test ou des healthchecks
+  if (!origin) {
+    return true; // Accepter les requêtes sans origine
+  }
   
   // En développement, accepter toutes les origines
   if (!isProduction) return true;
@@ -541,6 +545,13 @@ async function createTablesManually() {
 // Cette route doit être définie AVANT tout autre middleware complexe
 app.get('/api/health', (req, res) => {
   // Réponse immédiate sans async/await pour éviter tout délai
+  console.log('🏥 Healthcheck request received:', {
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin || 'none',
+    userAgent: req.headers['user-agent'] || 'unknown'
+  });
+  
   res.status(200).json({ 
     status: 'ok',
     timestamp: new Date().toISOString(),
