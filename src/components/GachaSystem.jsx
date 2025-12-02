@@ -124,7 +124,13 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
           captain: captainConfig ? {
             ...result.captain,
             ...captainConfig,
-          } : result.captain,
+            // Ensure portrait exists
+            portrait: captainConfig.portrait || result.captain.portrait || '👤',
+          } : {
+            ...result.captain,
+            // Fallback portrait if no config found
+            portrait: result.captain.portrait || '👤',
+          },
         };
       });
       
