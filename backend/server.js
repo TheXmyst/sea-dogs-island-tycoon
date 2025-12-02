@@ -579,25 +579,136 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// Rate limiting for registration (in-memory, cleared on restart)
+const registrationRateLimit = new Map(); // IP -> { attempts: number, accounts: number, resetAt: timestamp }
+
+// Helper function to get client IP
+function getClientIP(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+         req.headers['x-real-ip'] || 
+         req.connection?.remoteAddress || 
+         req.socket?.remoteAddress ||
+         'unknown';
+}
+
+// Helper function to check rate limit
+function checkRateLimit(ip, maxAttempts = 10, maxAccounts = 3, windowMs = 3600000) { // 1 hour
+  const now = Date.now();
+  const record = registrationRateLimit.get(ip);
+  
+  if (!record || record.resetAt < now) {
+    // Reset or create new record
+    registrationRateLimit.set(ip, {
+      attempts: 1,
+      accounts: 0,
+      resetAt: now + windowMs
+    });
+    return { allowed: true, remaining: maxAttempts - 1 };
+  }
+  
+  if (record.attempts >= maxAttempts) {
+    const waitTime = Math.ceil((record.resetAt - now) / 1000 / 60); // minutes
+    return { 
+      allowed: false, 
+      error: `Trop de tentatives. Réessayez dans ${waitTime} minute(s).`,
+      waitTime 
+    };
+  }
+  
+  if (record.accounts >= maxAccounts) {
+    const waitTime = Math.ceil((record.resetAt - now) / 1000 / 60); // minutes
+    return { 
+      allowed: false, 
+      error: `Limite de ${maxAccounts} comptes par heure atteinte. Réessayez dans ${waitTime} minute(s).`,
+      waitTime 
+    };
+  }
+  
+  record.attempts++;
+  return { allowed: true, remaining: maxAttempts - record.attempts };
+}
+
+// Helper function to increment account count
+function incrementAccountCount(ip) {
+  const record = registrationRateLimit.get(ip);
+  if (record) {
+    record.accounts++;
+  }
+}
+
+// Cleanup old rate limit records (run every hour)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of registrationRateLimit.entries()) {
+    if (record.resetAt < now) {
+      registrationRateLimit.delete(ip);
+    }
+  }
+}, 3600000); // Every hour
+
 // Player routes
 app.post('/api/players/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
+    const clientIP = getClientIP(req);
     
-    // Validate input
-    if (!username || username.length < 3) {
-      return res.status(400).json({ success: false, error: 'Username must be at least 3 characters' });
+    // Rate limiting check
+    const rateLimitCheck = checkRateLimit(clientIP);
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json({ 
+        success: false, 
+        error: rateLimitCheck.error || 'Trop de tentatives. Veuillez réessayer plus tard.' 
+      });
     }
-    if (!password || password.length < 4) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 4 characters' });
+    
+    // Validate input - Username
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ success: false, error: 'Nom d\'utilisateur requis' });
+    }
+    
+    // Username validation: 3-20 characters, alphanumeric + underscore/hyphen only
+    const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Le nom d\'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres, _ ou - uniquement)' 
+      });
+    }
+    
+    // Validate password
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, error: 'Mot de passe requis' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Le mot de passe doit contenir au moins 6 caractères' });
+    }
+    if (password.length > 128) {
+      return res.status(400).json({ success: false, error: 'Le mot de passe est trop long (max 128 caractères)' });
+    }
+    
+    // Validate email if provided
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ success: false, error: 'Format d\'email invalide' });
+      }
     }
     
     if (useInMemoryDB) {
       // In-memory database fallback
       // Check if username already exists
       for (const player of inMemoryDB.players.values()) {
-        if (player.username === username) {
-          return res.status(400).json({ success: false, error: 'Username already exists' });
+        if (player.username.toLowerCase() === username.toLowerCase()) {
+          return res.status(400).json({ success: false, error: 'Ce nom d\'utilisateur est déjà pris' });
+        }
+      }
+      
+      // Check if email already exists (if provided)
+      if (email && email.trim().length > 0) {
+        for (const player of inMemoryDB.players.values()) {
+          if (player.email && player.email.toLowerCase() === email.trim().toLowerCase()) {
+            return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
+          }
         }
       }
       
@@ -645,6 +756,9 @@ app.post('/api/players/register', async (req, res) => {
       
       inMemoryDB.players.set(playerId, newPlayer);
       
+      // Increment account count for rate limiting
+      incrementAccountCount(clientIP);
+      
       res.json({ 
         success: true, 
         id: newPlayer.id,
@@ -668,14 +782,26 @@ app.post('/api/players/register', async (req, res) => {
     // Hash password (simplified - use bcrypt in production)
     const passwordHash = password; // TODO: Use bcrypt
     
-    // Check if username already exists
-    const existing = await pool.query(
-      'SELECT id FROM players WHERE username = $1',
+    // Check if username already exists (case-insensitive)
+    const existingUsername = await pool.query(
+      'SELECT id FROM players WHERE LOWER(username) = LOWER($1)',
       [username]
     );
     
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ success: false, error: 'Username already exists' });
+    if (existingUsername.rows.length > 0) {
+      return res.status(400).json({ success: false, error: 'Ce nom d\'utilisateur est déjà pris' });
+    }
+    
+    // Check if email already exists (if provided)
+    if (email && email.trim().length > 0) {
+      const existingEmail = await pool.query(
+        'SELECT id FROM players WHERE email IS NOT NULL AND LOWER(email) = LOWER($1)',
+        [email.trim()]
+      );
+      
+      if (existingEmail.rows.length > 0) {
+        return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
+      }
     }
     
     // Create initial game state
@@ -717,6 +843,9 @@ app.post('/api/players/register', async (req, res) => {
     );
     
     const player = result.rows[0];
+    
+    // Increment account count for rate limiting
+    incrementAccountCount(clientIP);
     
     // Assign player to a sea (if PostgreSQL available)
     if (pool && !useInMemoryDB) {
