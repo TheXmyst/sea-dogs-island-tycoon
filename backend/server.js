@@ -65,19 +65,13 @@ const app = express();
 // Railway fournit le port via PORT, sinon utiliser 5000 par défaut
 const PORT = process.env.PORT || 5000;
 
-// Middleware de logging TRÈS TÔT pour voir toutes les requêtes
-app.use((req, res, next) => {
-  console.log(`\n📥 INCOMING REQUEST: ${req.method} ${req.url}`);
-  console.log(`   Headers:`, {
-    host: req.headers.host,
-    origin: req.headers.origin || 'none',
-    'user-agent': req.headers['user-agent']?.substring(0, 50) || 'unknown'
+// Middleware de logging pour les requêtes (production: seulement les erreurs)
+if (!isProduction) {
+  app.use((req, res, next) => {
+    console.log(`📥 ${req.method} ${req.url} - IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
+    next();
   });
-  console.log(`   IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
-  console.log(`   ✅ Calling next() from first middleware`);
-  next();
-  console.log(`   ⚠️  After next() in first middleware (should not see this if response sent)`);
-});
+}
 
 // Middleware de sécurité
 // Configuration CORS sécurisée pour Vercel (frontend) + Railway (backend)
@@ -182,18 +176,7 @@ app.use((req, res, next) => {
 console.log('✅ CORS middleware configured (manual implementation)');
 
 // Limiter la taille du body JSON (protection contre DoS)
-app.use((req, res, next) => {
-  console.log(`   🟡 Before JSON parser middleware`);
-  next();
-  console.log(`   🟡 After JSON parser middleware (should not see this if response sent)`);
-});
 app.use(express.json({ limit: '10mb' }));
-app.use((req, res, next) => {
-  console.log(`   🟠 After JSON parser middleware - calling next`);
-  next();
-  console.log(`   🟠 After JSON parser next() (should not see this if response sent)`);
-});
-console.log('✅ JSON parser middleware configured');
 
 // Rate limiting global pour toutes les routes SAUF /api/health (pour Railway healthcheck)
 const globalRateLimiter = createRateLimiter({
@@ -203,15 +186,11 @@ const globalRateLimiter = createRateLimiter({
 });
 // Exclure /api/health du rate limiting (nécessaire pour Railway healthcheck)
 app.use('/api', (req, res, next) => {
-  console.log(`🔍 Rate limiter check: ${req.method} ${req.path}`);
   if (req.path === '/health') {
-    console.log('✅ Skipping rate limiter for /api/health');
     return next(); // Skip rate limiting for healthcheck
   }
-  console.log('⏱️  Applying rate limiter');
   return globalRateLimiter(req, res, next);
 });
-console.log('✅ Rate limiter middleware configured');
 
 // Database connection with fallback to in-memory storage for development
 let pool = null;
@@ -621,41 +600,19 @@ async function createTablesManually() {
 
 // Routes
 
-// Route de test ultra-simple (AVANT tout middleware)
+// Route de test simple
 app.get('/', (req, res) => {
-  console.log('📥 Root request received - sending response');
   res.status(200).send('Server is running!');
-  console.log('✅ Root response sent');
 });
 
-// Health check SIMPLE et IMMÉDIAT pour Railway (doit répondre instantanément)
-// Cette route doit être définie AVANT tout autre middleware complexe
+// Health check pour Railway
 app.get('/api/health', (req, res) => {
-  // Réponse immédiate sans async/await pour éviter tout délai
-  console.log('🏥 Healthcheck request received - route handler called:', {
-    method: req.method,
-    path: req.path,
-    url: req.url,
-    origin: req.headers.origin || 'none',
-    userAgent: req.headers['user-agent'] || 'unknown',
-    ip: req.ip || req.connection?.remoteAddress
+  res.status(200).json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
-  
-  try {
-    const response = { 
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    };
-    console.log('📤 Sending healthcheck response:', response);
-    res.status(200).json(response);
-    console.log('✅ Healthcheck response sent successfully');
-  } catch (error) {
-    console.error('❌ Error sending healthcheck response:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
-console.log('✅ Routes registered: / and /api/health');
 
 // Health check DÉTAILLÉ avec statut de la base de données (pour debugging)
 app.get('/api/health/detailed', async (req, res) => {
