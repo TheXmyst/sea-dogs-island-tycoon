@@ -74,7 +74,9 @@ app.use((req, res, next) => {
     'user-agent': req.headers['user-agent']?.substring(0, 50) || 'unknown'
   });
   console.log(`   IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
+  console.log(`   ✅ Calling next() from first middleware`);
   next();
+  console.log(`   ⚠️  After next() in first middleware (should not see this if response sent)`);
 });
 
 // Middleware de sécurité
@@ -126,11 +128,31 @@ const corsOptions = {
   maxAge: 86400, // Cache preflight requests for 24 hours
 };
 
+app.use((req, res, next) => {
+  console.log(`   🔵 Before CORS middleware`);
+  next();
+  console.log(`   🔵 After CORS middleware (should not see this if response sent)`);
+});
 app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  console.log(`   🟢 After CORS middleware - calling next`);
+  next();
+  console.log(`   🟢 After CORS next() (should not see this if response sent)`);
+});
 console.log('✅ CORS middleware configured');
 
 // Limiter la taille du body JSON (protection contre DoS)
+app.use((req, res, next) => {
+  console.log(`   🟡 Before JSON parser middleware`);
+  next();
+  console.log(`   🟡 After JSON parser middleware (should not see this if response sent)`);
+});
 app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  console.log(`   🟠 After JSON parser middleware - calling next`);
+  next();
+  console.log(`   🟠 After JSON parser next() (should not see this if response sent)`);
+});
 console.log('✅ JSON parser middleware configured');
 
 // Rate limiting global pour toutes les routes SAUF /api/health (pour Railway healthcheck)
