@@ -738,7 +738,7 @@ app.post('/api/players/register', async (req, res) => {
       const newPlayer = {
         id: playerId,
         username,
-        email: email || null,
+        email: email.trim(),
         password_hash: password, // TODO: Use bcrypt
         resources: initialGameState.resources,
         buildings: initialGameState.buildings,
@@ -823,7 +823,7 @@ app.post('/api/players/register', async (req, res) => {
                             buildings, ships, captains, captain_skins, active_skins, crew, researched_technologies, technology_timers, timers, game_version, last_update) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
          RETURNING id, username, created_at, resources, gacha_pity, event_progress, buildings, ships, captains, captain_skins, active_skins, crew, researched_technologies, technology_timers, timers, game_version, last_update`,
-      [username, email || null, passwordHash, 
+      [username, email.trim(), passwordHash, 
        JSON.stringify(initialGameState.resources), 
        JSON.stringify(initialGameState.gachaPity), 
        JSON.stringify(initialGameState.eventProgress),
