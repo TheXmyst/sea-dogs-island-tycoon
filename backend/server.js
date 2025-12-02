@@ -2018,14 +2018,16 @@ app.post('/api/sea/distance', async (req, res) => {
   }
 });
 
-// Start server
+// Start server IMMEDIATELY (for Railway healthcheck)
 // Railway requires binding to 0.0.0.0, not just localhost
-// Start server after database initialization
-initializeDatabase().then(() => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
-    console.log(`📊 API available at http://0.0.0.0:${PORT}/api`);
-    
+// Start server first, then initialize database in background
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
+  console.log(`📊 API available at http://0.0.0.0:${PORT}/api`);
+  console.log(`⏳ Initializing database in background...`);
+  
+  // Initialize database in background (non-blocking)
+  initializeDatabase().then(() => {
     if (useInMemoryDB) {
       console.log(`\n⚠️  ⚠️  ⚠️  WARNING: Using in-memory database ⚠️  ⚠️  ⚠️`);
       console.log(`   All data will be LOST on restart/redeploy!`);
@@ -2038,13 +2040,21 @@ initializeDatabase().then(() => {
     } else {
       console.log(`✅ PostgreSQL connected - Data will persist`);
     }
+  }).catch((error) => {
+    console.error('❌ Failed to initialize database:', error);
+    console.error('Continuing with in-memory database...');
+    useInMemoryDB = true;
   });
-}).catch((error) => {
-  console.error('❌ Failed to initialize database:', error);
-  console.error('Starting server anyway with in-memory database...');
-  useInMemoryDB = true;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on http://0.0.0.0:${PORT} (in-memory mode)`);
-  });
+});
+
+// Handle uncaught errors to prevent crashes
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  // Don't exit - keep server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep server running
 });
 
