@@ -7,6 +7,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
+import { authenticateToken, verifyOwnership, generateToken } from './middleware/auth.js';
+import { createRateLimiter, getClientIP } from './middleware/rateLimiter.js';
 
 dotenv.config();
 
@@ -61,18 +64,63 @@ function getInitialGameState() {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-// Configure CORS to allow requests from any origin (for public deployment)
-// In production, you should restrict this to your frontend domain
+// Middleware de sécurité
+// Configuration CORS sécurisée pour Vercel (frontend) + Railway (backend)
+const isProduction = process.env.NODE_ENV === 'production';
+const frontendUrl = process.env.FRONTEND_URL;
+
+// Fonction pour valider l'origine (support Vercel avec plusieurs domaines)
+const validateOrigin = (origin) => {
+  if (!origin) return false;
+  
+  // En développement, accepter toutes les origines
+  if (!isProduction) return true;
+  
+  // Si FRONTEND_URL n'est pas défini en production, accepter toutes les origines (avec warning)
+  if (!frontendUrl) {
+    console.warn('⚠️  FRONTEND_URL non défini en production. CORS ouvert à toutes les origines.');
+    return true;
+  }
+  
+  // Support de plusieurs URLs séparées par des virgules
+  const allowedUrls = frontendUrl.split(',').map(url => url.trim());
+  
+  // Vérifier si l'origine correspond à une URL autorisée
+  // Support des domaines Vercel (ex: *.vercel.app, votre-domaine.com)
+  return allowedUrls.some(allowedUrl => {
+    // Correspondance exacte
+    if (origin === allowedUrl) return true;
+    
+    // Support des wildcards pour Vercel (ex: https://*.vercel.app)
+    if (allowedUrl.includes('*')) {
+      const regex = new RegExp('^' + allowedUrl.replace(/\*/g, '.*') + '$');
+      return regex.test(origin);
+    }
+    
+    return false;
+  });
+};
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow all origins in development, restrict in production
+  origin: validateOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400, // Cache preflight requests for 24 hours
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Limiter la taille du body JSON (protection contre DoS)
+app.use(express.json({ limit: '10mb' }));
+
+// Rate limiting global pour toutes les routes
+const globalRateLimiter = createRateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 100, // 100 requêtes par minute par IP
+  message: 'Trop de requêtes. Veuillez ralentir.'
+});
+app.use('/api', globalRateLimiter);
 
 // Database connection with fallback to in-memory storage for development
 let pool = null;
@@ -582,14 +630,7 @@ app.get('/api/health', async (req, res) => {
 // Rate limiting for registration (in-memory, cleared on restart)
 const registrationRateLimit = new Map(); // IP -> { attempts: number, accounts: number, resetAt: timestamp }
 
-// Helper function to get client IP
-function getClientIP(req) {
-  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-         req.headers['x-real-ip'] || 
-         req.connection?.remoteAddress || 
-         req.socket?.remoteAddress ||
-         'unknown';
-}
+// Note: getClientIP est maintenant importé depuis middleware/rateLimiter.js
 
 // Helper function to check rate limit
 function checkRateLimit(ip, maxAttempts = 10, maxAccounts = 3, windowMs = 3600000) { // 1 hour
@@ -735,11 +776,16 @@ app.post('/api/players/register', async (req, res) => {
       const initialGameState = getInitialGameState();
       
       const playerId = `mem_${inMemoryDB.nextPlayerId++}`;
+      
+      // Hasher le mot de passe avec bcrypt
+      const saltRounds = 10;
+      const password_hash = await bcrypt.hash(password, saltRounds);
+      
       const newPlayer = {
         id: playerId,
         username,
         email: email.trim(),
-        password_hash: password, // TODO: Use bcrypt
+        password_hash: password_hash,
         resources: initialGameState.resources,
         buildings: initialGameState.buildings,
         ships: initialGameState.ships,
@@ -759,8 +805,12 @@ app.post('/api/players/register', async (req, res) => {
       // Increment account count for rate limiting
       incrementAccountCount(clientIP);
       
+      // Générer un token JWT pour l'utilisateur
+      const token = generateToken(newPlayer.id, newPlayer.username);
+      
       res.json({ 
         success: true, 
+        token: token, // Inclure le token dans la réponse
         id: newPlayer.id,
         username: newPlayer.username,
         resources: newPlayer.resources,
@@ -779,8 +829,9 @@ app.post('/api/players/register', async (req, res) => {
     }
     
     // PostgreSQL database
-    // Hash password (simplified - use bcrypt in production)
-    const passwordHash = password; // TODO: Use bcrypt
+    // Hasher le mot de passe avec bcrypt
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
     
     // Check if username already exists (case-insensitive)
     const existingUsername = await pool.query(
@@ -905,8 +956,12 @@ app.post('/api/players/register', async (req, res) => {
       }
     };
     
+    // Générer un token JWT pour l'utilisateur
+    const token = generateToken(player.id, player.username);
+    
     res.json({ 
       success: true, 
+      token: token, // Inclure le token dans la réponse
       id: player.id,
       username: player.username,
       resources: parseJSONB(player.resources) || {},
@@ -944,16 +999,21 @@ app.post('/api/players/login', async (req, res) => {
       }
       
       if (!player) {
-        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        return res.status(401).json({ success: false, error: 'Identifiants invalides' });
       }
       
-      // TODO: Verify password with bcrypt (for now, simple check)
-      if (player.password_hash !== password) {
-        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      // Vérifier le mot de passe avec bcrypt
+      const isPasswordValid = await bcrypt.compare(password, player.password_hash);
+      if (!isPasswordValid) {
+        return res.status(401).json({ success: false, error: 'Identifiants invalides' });
       }
+      
+      // Générer un token JWT pour l'utilisateur
+      const token = generateToken(player.id, player.username);
       
       res.json({ 
         success: true, 
+        token: token, // Inclure le token dans la réponse
         id: player.id,
         username: player.username,
         resources: player.resources || {},
@@ -981,13 +1041,15 @@ app.post('/api/players/login', async (req, res) => {
     );
     
     if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      return res.status(401).json({ success: false, error: 'Identifiants invalides' });
     }
     
     const player = result.rows[0];
-    // TODO: Verify password with bcrypt (for now, simple check)
-    if (player.password_hash !== password) {
-      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    
+    // Vérifier le mot de passe avec bcrypt
+    const isPasswordValid = await bcrypt.compare(password, player.password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, error: 'Identifiants invalides' });
     }
     
     // Update last login
@@ -1007,9 +1069,13 @@ app.post('/api/players/login', async (req, res) => {
       }
     };
     
+    // Générer un token JWT pour l'utilisateur
+    const token = generateToken(player.id, player.username);
+    
     // Return player data with complete game state
     res.json({ 
       success: true, 
+      token: token, // Inclure le token dans la réponse
       id: player.id,
       username: player.username,
       resources: parseJSONB(player.resources) || {},
@@ -1032,8 +1098,8 @@ app.post('/api/players/login', async (req, res) => {
   }
 });
 
-// Island routes
-app.get('/api/islands/:playerId', async (req, res) => {
+// Island routes (protégée)
+app.get('/api/islands/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     
@@ -1081,8 +1147,8 @@ app.get('/api/islands/:playerId', async (req, res) => {
   }
 });
 
-// Game state save/load routes
-app.post('/api/game/save/:playerId', async (req, res) => {
+// Game state save/load routes (protégées)
+app.post('/api/game/save/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     const { resources, buildings, ships, captains, captainSkins, activeSkins, crew, researchedTechnologies, technologyTimers, gachaPity, eventProgress, timers, version } = req.body;
@@ -1201,7 +1267,7 @@ app.post('/api/game/save/:playerId', async (req, res) => {
   }
 });
 
-app.get('/api/game/load/:playerId', async (req, res) => {
+app.get('/api/game/load/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     
@@ -1441,7 +1507,7 @@ app.get('/api/leaderboard/top', async (req, res) => {
   }
 });
 
-app.get('/api/leaderboard/rank/:playerId', async (req, res) => {
+app.get('/api/leaderboard/rank/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     
@@ -1477,8 +1543,8 @@ app.get('/api/leaderboard/rank/:playerId', async (req, res) => {
   }
 });
 
-// Captains routes
-app.get('/api/captains/:playerId', async (req, res) => {
+// Captains routes (protégée)
+app.get('/api/captains/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     
@@ -1494,15 +1560,27 @@ app.get('/api/captains/:playerId', async (req, res) => {
   }
 });
 
-// Gacha routes
-app.post('/api/gacha/pull', async (req, res) => {
+// Gacha routes (protégée)
+app.post('/api/gacha/pull', authenticateToken, async (req, res) => {
   try {
     const { playerId, costType, costAmount, pullCount = 1 } = req.body;
     
     if (!playerId || !costType || costAmount === undefined) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Missing required fields: playerId, costType, costAmount' 
+        error: 'Champs requis manquants: playerId, costType, costAmount' 
+      });
+    }
+    
+    // Vérifier que l'utilisateur accède uniquement à ses propres données
+    const authenticatedUserId = req.user?.id;
+    const requestedPlayerId = parseInt(playerId);
+    const authenticatedId = parseInt(authenticatedUserId);
+    
+    if (requestedPlayerId !== authenticatedId) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Accès non autorisé. Vous ne pouvez effectuer des actions que pour votre propre compte.' 
       });
     }
     
@@ -1728,9 +1806,9 @@ app.post('/api/debug/update-building-position', async (req, res) => {
   }
 });
 
-// Sea System Routes
+// Sea System Routes (protégées)
 // Assign player to a sea (called on registration or first login)
-app.post('/api/sea/assign/:playerId', async (req, res) => {
+app.post('/api/sea/assign/:playerId', authenticateToken, verifyOwnership, async (req, res) => {
   try {
     const { playerId } = req.params;
     
