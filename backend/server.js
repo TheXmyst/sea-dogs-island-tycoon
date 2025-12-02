@@ -686,12 +686,14 @@ app.post('/api/players/register', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Le mot de passe est trop long (max 128 caractères)' });
     }
     
-    // Validate email if provided
-    if (email && typeof email === 'string' && email.trim().length > 0) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        return res.status(400).json({ success: false, error: 'Format d\'email invalide' });
-      }
+    // Validate email (now required)
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'L\'email est obligatoire' });
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ success: false, error: 'Format d\'email invalide' });
     }
     
     if (useInMemoryDB) {
@@ -703,12 +705,10 @@ app.post('/api/players/register', async (req, res) => {
         }
       }
       
-      // Check if email already exists (if provided)
-      if (email && email.trim().length > 0) {
-        for (const player of inMemoryDB.players.values()) {
-          if (player.email && player.email.toLowerCase() === email.trim().toLowerCase()) {
-            return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
-          }
+      // Check if email already exists (now required)
+      for (const player of inMemoryDB.players.values()) {
+        if (player.email && player.email.toLowerCase() === email.trim().toLowerCase()) {
+          return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
         }
       }
       
@@ -792,16 +792,14 @@ app.post('/api/players/register', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Ce nom d\'utilisateur est déjà pris' });
     }
     
-    // Check if email already exists (if provided)
-    if (email && email.trim().length > 0) {
-      const existingEmail = await pool.query(
-        'SELECT id FROM players WHERE email IS NOT NULL AND LOWER(email) = LOWER($1)',
-        [email.trim()]
-      );
-      
-      if (existingEmail.rows.length > 0) {
-        return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
-      }
+    // Check if email already exists (now required)
+    const existingEmail = await pool.query(
+      'SELECT id FROM players WHERE email IS NOT NULL AND LOWER(email) = LOWER($1)',
+      [email.trim()]
+    );
+    
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({ success: false, error: 'Cet email est déjà utilisé' });
     }
     
     // Create initial game state

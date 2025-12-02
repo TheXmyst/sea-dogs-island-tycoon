@@ -6,6 +6,7 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +18,18 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
       if (isLogin) {
         await onLogin({ username, password });
       } else {
-        // Email is optional for registration
+        // Validate password confirmation
+        if (password !== confirmPassword) {
+          showError('Les mots de passe ne correspondent pas');
+          setLoading(false);
+          return;
+        }
+        // Email is now required for registration
+        if (!email || email.trim().length === 0) {
+          showError('L\'email est obligatoire');
+          setLoading(false);
+          return;
+        }
         await onRegister({ username, password, email });
       }
     } catch (error) {
@@ -61,11 +73,12 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
 
           {!isLogin && (
             <div className="auth-form-group">
-              <label>Email (optional)</label>
+              <label>Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
                 placeholder="your@email.com"
               />
             </div>
@@ -78,15 +91,34 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={4}
+              minLength={6}
               placeholder="Enter your password"
             />
           </div>
 
+          {!isLogin && (
+            <div className="auth-form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="Confirm your password"
+              />
+              {confirmPassword && password !== confirmPassword && (
+                <span className="auth-error-text" style={{ color: '#ff4444', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
+                  Les mots de passe ne correspondent pas
+                </span>
+              )}
+            </div>
+          )}
+
           <button 
             type="submit" 
             className="auth-submit-button"
-            disabled={loading || !username || !password}
+            disabled={loading || !username || !password || (!isLogin && (!email || password !== confirmPassword))}
           >
             {loading ? 'Loading...' : (isLogin ? 'Login' : 'Register')}
           </button>
@@ -102,6 +134,7 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
                 setIsLogin(!isLogin);
                 setUsername('');
                 setPassword('');
+                setConfirmPassword('');
                 setEmail('');
               }}
             >
