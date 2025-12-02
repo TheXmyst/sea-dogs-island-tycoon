@@ -65,6 +65,18 @@ const app = express();
 // Railway fournit le port via PORT, sinon utiliser 5000 par défaut
 const PORT = process.env.PORT || 5000;
 
+// Middleware de logging TRÈS TÔT pour voir toutes les requêtes
+app.use((req, res, next) => {
+  console.log(`\n📥 INCOMING REQUEST: ${req.method} ${req.url}`);
+  console.log(`   Headers:`, {
+    host: req.headers.host,
+    origin: req.headers.origin || 'none',
+    'user-agent': req.headers['user-agent']?.substring(0, 50) || 'unknown'
+  });
+  console.log(`   IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
+  next();
+});
+
 // Middleware de sécurité
 // Configuration CORS sécurisée pour Vercel (frontend) + Railway (backend)
 const isProduction = process.env.NODE_ENV === 'production';
@@ -115,12 +127,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Middleware de logging pour toutes les requêtes (pour debugging)
-app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path} - IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
-  next();
-});
 
 // Limiter la taille du body JSON (protection contre DoS)
 app.use(express.json({ limit: '10mb' }));
