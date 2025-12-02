@@ -127,9 +127,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+console.log('✅ CORS middleware configured');
 
 // Limiter la taille du body JSON (protection contre DoS)
 app.use(express.json({ limit: '10mb' }));
+console.log('✅ JSON parser middleware configured');
 
 // Rate limiting global pour toutes les routes SAUF /api/health (pour Railway healthcheck)
 const globalRateLimiter = createRateLimiter({
@@ -139,11 +141,15 @@ const globalRateLimiter = createRateLimiter({
 });
 // Exclure /api/health du rate limiting (nécessaire pour Railway healthcheck)
 app.use('/api', (req, res, next) => {
+  console.log(`🔍 Rate limiter check: ${req.method} ${req.path}`);
   if (req.path === '/health') {
+    console.log('✅ Skipping rate limiter for /api/health');
     return next(); // Skip rate limiting for healthcheck
   }
+  console.log('⏱️  Applying rate limiter');
   return globalRateLimiter(req, res, next);
 });
+console.log('✅ Rate limiter middleware configured');
 
 // Database connection with fallback to in-memory storage for development
 let pool = null;
@@ -555,15 +561,16 @@ async function createTablesManually() {
 
 // Route de test ultra-simple (AVANT tout middleware)
 app.get('/', (req, res) => {
-  console.log('📥 Root request received');
+  console.log('📥 Root request received - sending response');
   res.status(200).send('Server is running!');
+  console.log('✅ Root response sent');
 });
 
 // Health check SIMPLE et IMMÉDIAT pour Railway (doit répondre instantanément)
 // Cette route doit être définie AVANT tout autre middleware complexe
 app.get('/api/health', (req, res) => {
   // Réponse immédiate sans async/await pour éviter tout délai
-  console.log('🏥 Healthcheck request received:', {
+  console.log('🏥 Healthcheck request received - route handler called:', {
     method: req.method,
     path: req.path,
     url: req.url,
@@ -573,17 +580,20 @@ app.get('/api/health', (req, res) => {
   });
   
   try {
-    res.status(200).json({ 
+    const response = { 
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
-    });
-    console.log('✅ Healthcheck response sent');
+    };
+    console.log('📤 Sending healthcheck response:', response);
+    res.status(200).json(response);
+    console.log('✅ Healthcheck response sent successfully');
   } catch (error) {
     console.error('❌ Error sending healthcheck response:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+console.log('✅ Routes registered: / and /api/health');
 
 // Health check DÉTAILLÉ avec statut de la base de données (pour debugging)
 app.get('/api/health/detailed', async (req, res) => {
