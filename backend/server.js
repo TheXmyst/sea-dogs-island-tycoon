@@ -2043,7 +2043,13 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📊 API available at http://0.0.0.0:${PORT}/api`);
   console.log(`✅ Healthcheck endpoint ready: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`🌐 Server listening on all interfaces (0.0.0.0)`);
+  console.log(`🔌 Port: ${PORT} (from process.env.PORT: ${process.env.PORT || 'default'})`);
   console.log(`⏳ Initializing database in background...`);
+  
+  // Vérifier que le serveur écoute vraiment
+  const address = server.address();
+  console.log(`📡 Server address:`, address);
   
   // Initialize database in background (non-blocking)
   initializeDatabase().then(() => {
