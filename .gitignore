@@ -30,6 +30,9 @@ dist-ssr
 .env.development
 backend/.env
 
+# Backend is now in a separate private repository
+backend/
+
 # Build outputs
 build
 out
