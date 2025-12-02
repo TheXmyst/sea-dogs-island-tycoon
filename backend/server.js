@@ -2069,8 +2069,17 @@ app.post('/api/sea/distance', async (req, res) => {
 
 // Start server IMMEDIATELY (for Railway healthcheck)
 // Railway requires binding to 0.0.0.0, not just localhost
-// Start server first, then initialize database in background
-const server = app.listen(PORT, '0.0.0.0', () => {
+// IMPORTANT: Railway utilise la variable PORT pour le routage
+console.log(`\n🔧 Starting server...`);
+console.log(`   PORT env: ${process.env.PORT || 'NOT SET'}`);
+console.log(`   Will listen on: 0.0.0.0:${PORT}`);
+
+const server = app.listen(PORT, '0.0.0.0', (err) => {
+  if (err) {
+    console.error('❌ Error starting server:', err);
+    process.exit(1);
+  }
+  
   console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📊 API available at http://0.0.0.0:${PORT}/api`);
   console.log(`✅ Healthcheck endpoint ready: http://0.0.0.0:${PORT}/api/health`);
@@ -2081,6 +2090,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   // Vérifier que le serveur écoute vraiment
   const address = server.address();
   console.log(`📡 Server address:`, address);
+  console.log(`✅ Server is ready to accept connections!`);
   
   // Initialize database in background (non-blocking)
   initializeDatabase().then(() => {
@@ -2123,12 +2133,26 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - keep server running
 });
 
-// Keep process alive
+// Keep process alive - NE PAS EXIT sur SIGTERM immédiatement
+// Railway peut envoyer SIGTERM pour redémarrer, mais on veut rester actif
 process.on('SIGTERM', () => {
-  console.log('⚠️  SIGTERM received, shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
+  console.log('⚠️  SIGTERM received, but keeping server alive...');
+  console.log('   Railway may send SIGTERM for healthcheck, ignoring it');
+  // Ne pas fermer le serveur - laisser Railway gérer
+  // server.close(() => {
+  //   console.log('✅ Server closed');
+  //   process.exit(0);
+  // });
+});
+
+// Ne pas exit sur SIGINT non plus en production
+process.on('SIGINT', () => {
+  console.log('⚠️  SIGINT received');
+  if (process.env.NODE_ENV !== 'production') {
+    server.close(() => {
+      console.log('✅ Server closed');
+      process.exit(0);
+    });
+  }
 });
 
