@@ -1005,6 +1005,7 @@ export default function App() {
         return (
           <GachaSystem
             gameState={gameState}
+            userId={userId}
             onPullComplete={handleGachaPull}
           />
         );

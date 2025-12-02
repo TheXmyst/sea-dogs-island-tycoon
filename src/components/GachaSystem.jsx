@@ -11,7 +11,7 @@ const PULL_COST_FRAGMENTS = 10;
 const MULTI_PULL_COUNT = 10;
 const MULTI_PULL_COST_DIAMONDS = PULL_COST_DIAMONDS * MULTI_PULL_COUNT;
 
-export default function GachaSystem({ gameState, onPullComplete }) {
+export default function GachaSystem({ gameState, userId, onPullComplete }) {
   const [pulling, setPulling] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   const [showResult, setShowResult] = useState(false);
@@ -31,7 +31,8 @@ export default function GachaSystem({ gameState, onPullComplete }) {
       return;
     }
     
-    const playerId = authAPI.getUserId();
+    // Use userId from props (more reliable) or fallback to localStorage
+    const playerId = userId || authAPI.getUserId();
     if (!playerId) {
       alert('Vous devez être connecté pour utiliser le gacha !\n\nLe système gacha est sécurisé et nécessite une connexion pour fonctionner.');
       return;
@@ -92,7 +93,8 @@ export default function GachaSystem({ gameState, onPullComplete }) {
       return;
     }
     
-    const playerId = authAPI.getUserId();
+    // Use userId from props (more reliable) or fallback to localStorage
+    const playerId = userId || authAPI.getUserId();
     if (!playerId) {
       alert('Vous devez être connecté pour utiliser le gacha !\n\nLe système gacha est sécurisé et nécessite une connexion pour fonctionner.');
       return;
@@ -170,7 +172,8 @@ export default function GachaSystem({ gameState, onPullComplete }) {
   const nextEpicAt = gachaPity.guaranteedEpicAt || 50;
   const nextLegendaryAt = gachaPity.guaranteedLegendaryAt || 100;
   
-  const isAuthenticated = authAPI.isAuthenticated();
+  // Check authentication: use userId prop or localStorage
+  const isAuthenticated = !!userId || authAPI.isAuthenticated();
   
   return (
     <div className="gacha-system">
