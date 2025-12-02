@@ -128,25 +128,58 @@ const corsOptions = {
   maxAge: 86400, // Cache preflight requests for 24 hours
 };
 
-// TEMPORAIRE: CORS simplifié pour debug - accepter toutes les origines
-// TODO: Remettre la configuration sécurisée une fois que ça fonctionne
+// CORS manuel avec validation d'origine sécurisée
 app.use((req, res, next) => {
-  console.log(`   🔵 CORS: Setting headers manually`);
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  
+  // Déterminer l'origine autorisée
+  let allowedOrigin = null;
+  
+  if (!origin) {
+    // Requêtes sans origine (curl, healthcheck, etc.) - autoriser
+    allowedOrigin = '*';
+  } else if (!isProduction) {
+    // En développement, accepter toutes les origines
+    allowedOrigin = origin;
+  } else if (!frontendUrl) {
+    // Si FRONTEND_URL n'est pas défini en production, accepter toutes (avec warning)
+    console.warn('⚠️  FRONTEND_URL non défini en production. CORS ouvert.');
+    allowedOrigin = origin;
+  } else {
+    // Valider l'origine en production
+    const allowedUrls = frontendUrl.split(',').map(url => url.trim());
+    const isAllowed = allowedUrls.some(allowedUrl => {
+      if (origin === allowedUrl) return true;
+      if (allowedUrl.includes('*')) {
+        const regex = new RegExp('^' + allowedUrl.replace(/\*/g, '.*') + '$');
+        return regex.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      allowedOrigin = origin;
+    } else {
+      // Origine non autorisée - rejeter
+      console.warn(`⚠️  CORS: Origin rejected: ${origin}`);
+      return res.status(403).json({ error: 'Origin not allowed' });
+    }
+  }
+  
+  // Définir les headers CORS
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Handle preflight requests
+  // Gérer les requêtes OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
-    console.log(`   🔵 CORS: Handling OPTIONS preflight`);
     return res.status(200).end();
   }
   
-  console.log(`   ✅ CORS: Headers set, calling next()`);
   next();
 });
-console.log('✅ CORS middleware configured (simplified for debugging)');
+console.log('✅ CORS middleware configured (manual implementation)');
 
 // Limiter la taille du body JSON (protection contre DoS)
 app.use((req, res, next) => {
