@@ -116,6 +116,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Middleware de logging pour toutes les requêtes (pour debugging)
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path} - IP: ${req.ip || req.connection?.remoteAddress || 'unknown'}`);
+  next();
+});
+
 // Limiter la taille du body JSON (protection contre DoS)
 app.use(express.json({ limit: '10mb' }));
 
@@ -541,6 +547,12 @@ async function createTablesManually() {
 
 // Routes
 
+// Route de test ultra-simple (AVANT tout middleware)
+app.get('/', (req, res) => {
+  console.log('📥 Root request received');
+  res.status(200).send('Server is running!');
+});
+
 // Health check SIMPLE et IMMÉDIAT pour Railway (doit répondre instantanément)
 // Cette route doit être définie AVANT tout autre middleware complexe
 app.get('/api/health', (req, res) => {
@@ -548,15 +560,23 @@ app.get('/api/health', (req, res) => {
   console.log('🏥 Healthcheck request received:', {
     method: req.method,
     path: req.path,
+    url: req.url,
     origin: req.headers.origin || 'none',
-    userAgent: req.headers['user-agent'] || 'unknown'
+    userAgent: req.headers['user-agent'] || 'unknown',
+    ip: req.ip || req.connection?.remoteAddress
   });
   
-  res.status(200).json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+  try {
+    res.status(200).json({ 
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+    console.log('✅ Healthcheck response sent');
+  } catch (error) {
+    console.error('❌ Error sending healthcheck response:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Health check DÉTAILLÉ avec statut de la base de données (pour debugging)
