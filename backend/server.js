@@ -537,8 +537,20 @@ async function createTablesManually() {
 
 // Routes
 
-// Health check with database status
-app.get('/api/health', async (req, res) => {
+// Health check SIMPLE et IMMÉDIAT pour Railway (doit répondre instantanément)
+// Cette route doit être définie AVANT tout autre middleware complexe
+app.get('/api/health', (req, res) => {
+  // Réponse immédiate sans async/await pour éviter tout délai
+  res.status(200).json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Health check DÉTAILLÉ avec statut de la base de données (pour debugging)
+app.get('/api/health/detailed', async (req, res) => {
+  console.log('🏥 Detailed healthcheck request received');
   let dbConnected = false;
   let dbType = 'not-configured';
   let dbError = null;
