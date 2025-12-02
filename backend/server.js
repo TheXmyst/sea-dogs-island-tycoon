@@ -2021,9 +2021,10 @@ app.post('/api/sea/distance', async (req, res) => {
 // Start server IMMEDIATELY (for Railway healthcheck)
 // Railway requires binding to 0.0.0.0, not just localhost
 // Start server first, then initialize database in background
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📊 API available at http://0.0.0.0:${PORT}/api`);
+  console.log(`✅ Healthcheck endpoint ready: http://0.0.0.0:${PORT}/api/health`);
   console.log(`⏳ Initializing database in background...`);
   
   // Initialize database in background (non-blocking)
@@ -2047,14 +2048,32 @@ app.listen(PORT, '0.0.0.0', () => {
   });
 });
 
+// Handle server errors
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`   Port ${PORT} is already in use`);
+  }
+});
+
 // Handle uncaught errors to prevent crashes
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
   // Don't exit - keep server running
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   // Don't exit - keep server running
+});
+
+// Keep process alive
+process.on('SIGTERM', () => {
+  console.log('⚠️  SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
