@@ -130,10 +130,35 @@ const corsOptions = {
 
 app.use((req, res, next) => {
   console.log(`   🔵 Before CORS middleware`);
+  console.log(`   🔵 Origin validation test:`, {
+    origin: req.headers.origin || 'none',
+    isProduction,
+    frontendUrl,
+    validateResult: validateOrigin(req.headers.origin)
+  });
   next();
   console.log(`   🔵 After CORS middleware (should not see this if response sent)`);
 });
-app.use(cors(corsOptions));
+
+// Wrapper CORS pour debug
+const corsMiddleware = cors(corsOptions);
+app.use((req, res, next) => {
+  console.log(`   🔵 About to call CORS middleware`);
+  const originalEnd = res.end;
+  res.end = function(...args) {
+    console.log(`   ⚠️  CORS sent response! Status: ${res.statusCode}`);
+    return originalEnd.apply(this, args);
+  };
+  corsMiddleware(req, res, (err) => {
+    if (err) {
+      console.error(`   ❌ CORS error:`, err);
+      return next(err);
+    }
+    console.log(`   ✅ CORS middleware called next() successfully`);
+    next();
+  });
+});
+
 app.use((req, res, next) => {
   console.log(`   🟢 After CORS middleware - calling next`);
   next();
