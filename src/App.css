@@ -97,12 +97,12 @@
   bottom: 0;
   background-image: url('/title.png');
   background-size: cover;
-  background-position: center 60%;
+  background-position: center 80%;
   background-repeat: no-repeat;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 15%;
+  padding-bottom: 8%;
   z-index: 1000;
 }
 
