@@ -115,13 +115,19 @@ app.use(cors(corsOptions));
 // Limiter la taille du body JSON (protection contre DoS)
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting global pour toutes les routes
+// Rate limiting global pour toutes les routes SAUF /api/health (pour Railway healthcheck)
 const globalRateLimiter = createRateLimiter({
   windowMs: 60000, // 1 minute
   maxRequests: 100, // 100 requêtes par minute par IP
   message: 'Trop de requêtes. Veuillez ralentir.'
 });
-app.use('/api', globalRateLimiter);
+// Exclure /api/health du rate limiting (nécessaire pour Railway healthcheck)
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') {
+    return next(); // Skip rate limiting for healthcheck
+  }
+  return globalRateLimiter(req, res, next);
+});
 
 // Database connection with fallback to in-memory storage for development
 let pool = null;
