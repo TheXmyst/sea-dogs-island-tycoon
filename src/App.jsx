@@ -1101,20 +1101,36 @@ export default function App() {
         <DevTools
           gameState={gameState}
           onAddResources={(resources) => {
-            setGameState(prevState => ({
-              ...prevState,
-              resources: addResources(prevState.resources, resources),
-            }));
+            setGameState(prevState => {
+              const newState = {
+                ...prevState,
+                resources: addResources(prevState.resources, resources),
+              };
+              // Save to backend immediately (MMO mode)
+              saveGameState(newState, userId);
+              if (isAuthenticated && userId) {
+                saveToBackend(newState, true);
+              }
+              return newState;
+            });
             showSuccess('Resources added!');
           }}
           onAddDiamonds={(amount) => {
-            setGameState(prevState => ({
-              ...prevState,
-              resources: {
-                ...prevState.resources,
-                diamonds: (prevState.resources.diamonds || 0) + amount,
-              },
-            }));
+            setGameState(prevState => {
+              const newState = {
+                ...prevState,
+                resources: {
+                  ...prevState.resources,
+                  diamonds: (prevState.resources.diamonds || 0) + amount,
+                },
+              };
+              // Save to backend immediately (MMO mode)
+              saveGameState(newState, userId);
+              if (isAuthenticated && userId) {
+                saveToBackend(newState, true);
+              }
+              return newState;
+            });
             showSuccess(`${amount} Diamonds added!`);
           }}
           onCompleteBuildings={() => {
