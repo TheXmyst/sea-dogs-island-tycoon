@@ -62,6 +62,7 @@ function getInitialGameState() {
 }
 
 const app = express();
+// Railway fournit le port via PORT, sinon utiliser 5000 par défaut
 const PORT = process.env.PORT || 5000;
 
 // Middleware de sécurité
