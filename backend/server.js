@@ -143,11 +143,30 @@ app.use((req, res, next) => {
     // Valider l'origine en production
     const allowedUrls = frontendUrl.split(',').map(url => url.trim());
     const isAllowed = allowedUrls.some(allowedUrl => {
+      // Correspondance exacte
       if (origin === allowedUrl) return true;
+      
+      // Support des wildcards (ex: https://*.vercel.app)
       if (allowedUrl.includes('*')) {
         const regex = new RegExp('^' + allowedUrl.replace(/\*/g, '.*') + '$');
         return regex.test(origin);
       }
+      
+      // Support automatique des domaines Vercel (ex: https://*-*.vercel.app)
+      // Vercel génère des URLs avec des hashs comme: https://projet-hash-username.vercel.app
+      if (allowedUrl.includes('vercel.app')) {
+        // Extraire le domaine de base (ex: sea-dogs-island-tycoon.vercel.app)
+        const baseDomain = allowedUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        // Accepter tous les sous-domaines Vercel qui correspondent au projet
+        const vercelPattern = new RegExp('^https://[^/]*' + baseDomain.replace(/\./g, '\\.') + '$');
+        if (vercelPattern.test(origin)) return true;
+        
+        // Accepter aussi les previews Vercel (ex: projet-hash-username.vercel.app)
+        const projectName = baseDomain.split('.')[0];
+        const vercelPreviewPattern = new RegExp('^https://' + projectName.replace(/-/g, '-?') + '(-[a-z0-9]+)?(-[a-z0-9-]+)?\\.vercel\\.app$');
+        if (vercelPreviewPattern.test(origin)) return true;
+      }
+      
       return false;
     });
     
