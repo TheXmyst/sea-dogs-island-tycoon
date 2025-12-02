@@ -65,6 +65,11 @@ const app = express();
 // Railway fournit le port via PORT, sinon utiliser 5000 par défaut
 const PORT = process.env.PORT || 5000;
 
+// Middleware de sécurité
+// Configuration CORS sécurisée pour Vercel (frontend) + Railway (backend)
+const isProduction = process.env.NODE_ENV === 'production';
+const frontendUrl = process.env.FRONTEND_URL;
+
 // Middleware de logging pour les requêtes (production: seulement les erreurs)
 if (!isProduction) {
   app.use((req, res, next) => {
@@ -72,11 +77,6 @@ if (!isProduction) {
     next();
   });
 }
-
-// Middleware de sécurité
-// Configuration CORS sécurisée pour Vercel (frontend) + Railway (backend)
-const isProduction = process.env.NODE_ENV === 'production';
-const frontendUrl = process.env.FRONTEND_URL;
 
 // Fonction pour valider l'origine (support Vercel avec plusieurs domaines)
 const validateOrigin = (origin) => {
