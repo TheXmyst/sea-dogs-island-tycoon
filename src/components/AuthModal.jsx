@@ -17,6 +17,8 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   // Fonction pour démarrer la musique
   const startMusic = useCallback(() => {
     if (audioRef.current && !musicStarted) {
+      // Définir le volume avant de jouer
+      audioRef.current.volume = 0.7;
       audioRef.current.play().then(() => {
         setMusicStarted(true);
         console.log('Musique démarrée avec succès');
