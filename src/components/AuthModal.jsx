@@ -104,7 +104,7 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
     <div className="auth-modal-overlay" onClick={canClose ? onClose : undefined}>
       <audio
         ref={audioRef}
-        src={`${window.location.origin}/music/title.mp3`}
+        src="/music/title.mp3"
         loop
         preload="auto"
         onCanPlay={() => {

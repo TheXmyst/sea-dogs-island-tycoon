@@ -170,7 +170,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
   };
   
   const getRarityName = (rarity) => {
-    return rarity.charAt(0).toUpperCase() + rarity.slice(1);
+    return t(`captains.${rarity}`, rarity.charAt(0).toUpperCase() + rarity.slice(1));
   };
   
   // Get pity progress (use separate counters if available, fallback to legacy)
