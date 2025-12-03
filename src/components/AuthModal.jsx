@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useTranslation } from '../i18n/LanguageContext';
 import './AuthModal.css';
@@ -11,6 +11,25 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const audioRef = useRef(null);
+
+  // Démarrer la musique en boucle quand le composant se monte
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(error => {
+        // Ignorer les erreurs de lecture automatique (politique du navigateur)
+        console.log('Lecture automatique bloquée:', error);
+      });
+    }
+    
+    // Arrêter la musique quand le composant se démonte
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,6 +73,12 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
 
   return (
     <div className="auth-modal-overlay" onClick={canClose ? onClose : undefined}>
+      <audio
+        ref={audioRef}
+        src="/music/title.mp3"
+        loop
+        preload="auto"
+      />
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         {canClose && <button className="auth-modal-close" onClick={onClose}>×</button>}
         
