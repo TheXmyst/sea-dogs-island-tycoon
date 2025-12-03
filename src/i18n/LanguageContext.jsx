@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, defaultLanguage } from './translations';
+import { setConfigLanguage } from './configTranslations';
 
 const LanguageContext = createContext();
 
@@ -13,6 +14,7 @@ export function LanguageProvider({ children }) {
   // Save language to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('gameLanguage', language);
+    setConfigLanguage(language); // Sync with config translations
   }, [language]);
 
   // Translation function

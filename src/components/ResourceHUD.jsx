@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../i18n/LanguageContext';
 import './ResourceHUD.css';
 
 const RESOURCE_ICONS = {
@@ -26,12 +27,14 @@ const RESOURCE_COLORS = {
 };
 
 export default function ResourceHUD({ resources }) {
+  const { t } = useTranslation();
+  
   return (
     <div className="resource-hud">
       {Object.keys(resources).map(resource => (
         <div key={resource} className="resource-item" style={{ '--resource-color': RESOURCE_COLORS[resource] }}>
           <span className="resource-icon">{RESOURCE_ICONS[resource] || '📦'}</span>
-          <span className="resource-name">{resource.charAt(0).toUpperCase() + resource.slice(1)}</span>
+          <span className="resource-name">{t(`resources.${resource}`)}</span>
           <span className="resource-value">{Math.floor(resources[resource] || 0).toLocaleString()}</span>
         </div>
       ))}

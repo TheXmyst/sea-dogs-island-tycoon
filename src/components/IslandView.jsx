@@ -4,9 +4,11 @@ import { getBuildingConfig } from '../config/buildings';
 import BuildingModal from './BuildingModal';
 import ConstructionMenu from './ConstructionMenu';
 import { debugAPI } from '../services/api';
+import { useTranslation } from '../i18n/LanguageContext';
 import './IslandView.css';
 
 export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstruction }) {
+  const { t } = useTranslation();
   const [placingBuilding, setPlacingBuilding] = useState(null);
   const [showModal, setShowModal] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(true);
@@ -763,15 +765,15 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                 }}
                 onMouseEnter={() => setHoveredZone(buildingType)}
                 onMouseLeave={() => setHoveredZone(null)}
-                title={isBuilt ? `${config?.name} (Click to view)` : `${config?.name} - ${position.description}`}
+                title={isBuilt ? `${t(`buildings.items.${buildingType}.name`, config?.name)} (${t('buildings.clickToView')})` : `${t(`buildings.items.${buildingType}.name`, config?.name)} - ${position.description}`}
               >
                 {isBuilt && (
                   <div className="zone-building-indicator">
                     <div className="zone-building-icon">{config?.icon}</div>
-                    <div className="zone-building-level">Lv.{building.level}</div>
+                    <div className="zone-building-level">{t('buildings.level')}.{building.level}</div>
                     {building.isConstructing && (
                       <div className="zone-construction-overlay">
-                        <div className="zone-construction-text">Building...</div>
+                        <div className="zone-construction-text">{t('buildings.constructing')}</div>
                       </div>
                     )}
                   </div>
@@ -779,7 +781,7 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                 {isPlacing && !isBuilt && (
                   <div className="zone-placement-indicator">
                     <div className="zone-placement-icon">{config?.icon}</div>
-                    <div className="zone-placement-text">Place here</div>
+                    <div className="zone-placement-text">{t('buildings.placeHere')}</div>
                   </div>
                 )}
               </div>

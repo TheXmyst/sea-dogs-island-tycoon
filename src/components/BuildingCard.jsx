@@ -1,9 +1,11 @@
 import React from 'react';
 import { getBuildingConfig, checkPrerequisites } from '../config/buildings';
 import { hasResources } from '../utils/gameState';
+import { useTranslation } from '../i18n/LanguageContext';
 import './BuildingCard.css';
 
 export default function BuildingCard({ building, onClick, gameState }) {
+  const { t } = useTranslation();
   const config = getBuildingConfig(building.id);
   if (!config) return null;
   
@@ -20,8 +22,8 @@ export default function BuildingCard({ building, onClick, gameState }) {
       <div className="building-card-header">
         <span className="building-card-icon">{config.icon}</span>
         <div>
-          <div className="building-card-name">{config.name}</div>
-          <div className="building-card-description">{config.description}</div>
+          <div className="building-card-name">{t(`buildings.items.${building.id}.name`, config.name)}</div>
+          <div className="building-card-description">{t(`buildings.items.${building.id}.description`, config.description)}</div>
         </div>
       </div>
       
@@ -37,7 +39,7 @@ export default function BuildingCard({ building, onClick, gameState }) {
       </div>
       
       {!hasPrereq && (
-        <div className="building-card-error">Prerequisites not met</div>
+        <div className="building-card-error">{t('buildings.prerequisitesNotMet')}</div>
       )}
     </div>
   );

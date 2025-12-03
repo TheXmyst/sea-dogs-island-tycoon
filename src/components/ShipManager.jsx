@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { SHIPS, getShipConfig, calculateRepairCost } from '../config/ships';
 import { hasResources, deductResources, addResources } from '../utils/gameState';
+import { useTranslation } from '../i18n/LanguageContext';
 import './ShipManager.css';
 
 export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSelectShip }) {
+  const { t } = useTranslation();
   const [selectedShipType, setSelectedShipType] = useState(null);
   const [selectedShip, setSelectedShip] = useState(null);
   
@@ -40,14 +42,14 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
   return (
     <div className="ship-manager">
       <div className="ship-manager-header">
-        <h2>⚓ Fleet Management</h2>
-        <p>Build and manage your pirate fleet</p>
+        <h2>⚓ {t('ships.fleetManagement')}</h2>
+        <p>{t('ships.buildAndManage')}</p>
       </div>
       
       {gameState.buildings.find(b => b.type === 'dock' && !b.isConstructing) ? (
         <>
           <div className="ship-build-section">
-            <h3>Build New Ship</h3>
+            <h3>{t('ships.buildNewShip')}</h3>
             <div className="ship-list">
               {availableShips.map(ship => {
                 const canBuild = canBuildShip(ship.id);
@@ -59,26 +61,26 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                     <div className="ship-card-header">
                       <span className="ship-icon">{ship.icon}</span>
                       <div>
-                        <div className="ship-name">{ship.name}</div>
-                        <div className="ship-description">{ship.description}</div>
+                        <div className="ship-name">{t(`ships.items.${ship.id}.name`, ship.name)}</div>
+                        <div className="ship-description">{t(`ships.items.${ship.id}.description`, ship.description)}</div>
                       </div>
                     </div>
                     
                     <div className="ship-stats">
                       <div className="stat-item">
-                        <span>⚡ Speed:</span>
+                        <span>⚡ {t('ships.speed')}:</span>
                         <span>{ship.stats.speed}</span>
                       </div>
                       <div className="stat-item">
-                        <span>❤️ HP:</span>
+                        <span>❤️ {t('ships.health')}:</span>
                         <span>{ship.stats.hp}</span>
                       </div>
                       <div className="stat-item">
-                        <span>⚔️ Attack:</span>
+                        <span>⚔️ {t('ships.attack')}:</span>
                         <span>{ship.stats.attack}</span>
                       </div>
                       <div className="stat-item">
-                        <span>🛡️ Defense:</span>
+                        <span>🛡️ {t('ships.defense')}:</span>
                         <span>{ship.stats.defense}</span>
                       </div>
                     </div>
@@ -103,7 +105,7 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                           />
                         </div>
                         <div className="progress-text">
-                          Building... {Math.ceil((timer.endTime - Date.now()) / 1000)}s
+                          {t('buildings.constructing')} {Math.ceil((timer.endTime - Date.now()) / 1000)}s
                         </div>
                       </div>
                     )}
@@ -113,7 +115,7 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                       onClick={() => handleBuildShip(ship.id)}
                       disabled={!canBuild || isBuilding}
                     >
-                      {isBuilding ? 'Building...' : 'Build Ship'}
+                      {isBuilding ? t('buildings.constructing') : t('ships.buildShip')}
                     </button>
                   </div>
                 );
@@ -122,9 +124,9 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
           </div>
           
           <div className="ship-fleet-section">
-            <h3>Your Fleet ({playerShips.length})</h3>
+            <h3>{t('ships.yourFleet')} ({playerShips.length})</h3>
             {playerShips.length === 0 ? (
-              <div className="no-ships">No ships built yet. Build your first ship to start raiding!</div>
+              <div className="no-ships">{t('ships.noShips')}</div>
             ) : (
               <div className="fleet-list">
                 {playerShips.map(ship => {
@@ -146,7 +148,7 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                       <div className="fleet-ship-header">
                         <span className="ship-icon">{config.icon}</span>
                         <div>
-                          <div className="ship-name">{config.name}</div>
+                          <div className="ship-name">{t(`ships.items.${ship.type}.name`, config.name)}</div>
                           <div className="ship-id">ID: {ship.id.slice(0, 8)}</div>
                         </div>
                       </div>
@@ -154,14 +156,14 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                       <div className="ship-hp-bar">
                         <div className="hp-bar-fill" style={{ width: `${hpPercent}%` }} />
                         <div className="hp-bar-text">
-                          {Math.ceil(ship.hp)} / {ship.maxHp} HP
+                          {Math.ceil(ship.hp)} / {ship.maxHp} {t('ships.health')}
                         </div>
                       </div>
                       
                       {needsRepair && (
                         <div className="ship-repair-section">
                           <div className="repair-cost">
-                            Repair Cost:
+                            {t('ships.repairCost')}:
                             {Object.keys(repairCost).map(resource => (
                               <span key={resource} className={canRepair ? '' : 'insufficient'}>
                                 {getResourceIcon(resource)} {repairCost[resource]}
@@ -176,13 +178,13 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
                             }}
                             disabled={!canRepair}
                           >
-                            Repair
+                            {t('ships.repairShip')}
                           </button>
                         </div>
                       )}
                       
                       {ship.hp === ship.maxHp && (
-                        <div className="ship-ready">Ready for battle!</div>
+                        <div className="ship-ready">{t('ships.readyForBattle')}</div>
                       )}
                     </div>
                   );
@@ -193,8 +195,8 @@ export default function ShipManager({ gameState, onBuildShip, onRepairShip, onSe
         </>
       ) : (
         <div className="dock-required">
-          <p>You need to build a Dock first to construct ships.</p>
-          <p>Upgrade your Town Hall to Level 2 to unlock the Dock.</p>
+          <p>{t('ships.dockRequired')}</p>
+          <p>{t('ships.upgradeTownHall')}</p>
         </div>
       )}
     </div>

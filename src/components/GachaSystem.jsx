@@ -3,6 +3,7 @@ import { CAPTAIN_RARITY, getCaptainConfig, performGachaPull } from '../config/ca
 import { hasResources, deductResources } from '../utils/gameState';
 import { gachaAPI } from '../services/api';
 import { authAPI } from '../services/api';
+import { useTranslation } from '../i18n/LanguageContext';
 import './GachaSystem.css';
 
 const PULL_COST_DIAMONDS = 100;
@@ -12,6 +13,7 @@ const MULTI_PULL_COUNT = 10;
 const MULTI_PULL_COST_DIAMONDS = PULL_COST_DIAMONDS * MULTI_PULL_COUNT;
 
 export default function GachaSystem({ gameState, userId, onPullComplete }) {
+  const { t } = useTranslation();
   const [pulling, setPulling] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   const [showResult, setShowResult] = useState(false);
@@ -27,14 +29,14 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
     const costAmount = useFragments ? PULL_COST_FRAGMENTS : PULL_COST_DIAMONDS;
     
     if (!hasResources(gameState.resources, { [costType]: costAmount })) {
-      alert('Ressources insuffisantes !');
+      alert(t('gacha.insufficientDiamonds'));
       return;
     }
     
     // Use userId from props (more reliable) or fallback to localStorage
     const playerId = userId || authAPI.getUserId();
     if (!playerId) {
-      alert('Vous devez être connecté pour utiliser le gacha !\n\nLe système gacha est sécurisé et nécessite une connexion pour fonctionner.');
+      alert(t('gacha.mustBeLoggedIn'));
       return;
     }
     
@@ -87,7 +89,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
       setShowResult(true);
     } catch (error) {
       console.error('Error during gacha pull:', error);
-      alert('Error: Failed to pull captain. ' + (error.message || 'Please try again.'));
+      alert(t('gacha.errorPull') + ' ' + (error.message || t('common.tryAgain')));
     } finally {
       setPulling(false);
     }
@@ -95,7 +97,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
   
   const handleMultiPull = async () => {
     if (!canMultiPull) {
-      alert(`Diamants insuffisants ! Il faut ${MULTI_PULL_COST_DIAMONDS} diamants pour 10 tirages.`);
+      alert(t('gacha.insufficientDiamonds') + ' ' + MULTI_PULL_COST_DIAMONDS + ' ' + t('gacha.needDiamonds'));
       return;
     }
     
@@ -190,8 +192,8 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
   return (
     <div className="gacha-system">
       <div className="gacha-header">
-        <h2>🎰 Captain Recruitment</h2>
-        <p>Recruit powerful captains to join your crew!</p>
+        <h2>🎰 {t('gacha.captainRecruitment')}</h2>
+        <p>{t('gacha.recruitPowerful')}</p>
         {!isAuthenticated && (
           <div style={{
             marginTop: '10px',
@@ -202,16 +204,16 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             color: '#ffc107',
             fontWeight: 'bold'
           }}>
-            ⚠️ Vous devez être connecté pour utiliser le gacha (système sécurisé en ligne)
+            ⚠️ {t('gacha.mustBeConnected')}
           </div>
         )}
       </div>
       
       <div className="gacha-pity-info">
-        <h3>Pity System</h3>
+        <h3>{t('gacha.pitySystem')}</h3>
         <div className="pity-bars">
           <div className="pity-bar">
-            <div className="pity-label">Epic Guarantee</div>
+            <div className="pity-label">{t('gacha.epicGuarantee')}</div>
             <div className="pity-progress-bar">
             <div 
               className="pity-progress-fill"
@@ -222,11 +224,11 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             />
           </div>
           <div className="pity-text">
-            {epicPulls} / {nextEpicAt} pulls
+            {epicPulls} / {nextEpicAt} {t('gacha.pulls')}
           </div>
         </div>
         <div className="pity-bar">
-          <div className="pity-label">Legendary Guarantee</div>
+          <div className="pity-label">{t('gacha.legendaryGuarantee')}</div>
           <div className="pity-progress-bar">
             <div 
               className="pity-progress-fill"
@@ -237,7 +239,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             />
           </div>
           <div className="pity-text">
-            {legendaryPulls} / {nextLegendaryAt} pulls
+            {legendaryPulls} / {nextLegendaryAt} {t('gacha.pulls')}
           </div>
           </div>
         </div>
@@ -246,10 +248,10 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
       <div className="gacha-pull-section">
         <div className="pull-options">
           <div className="pull-option">
-            <h3>Single Pull</h3>
+            <h3>{t('gacha.singlePull')}</h3>
             <div className="pull-cost">
               <span>💎 {PULL_COST_DIAMONDS}</span>
-              <span>or</span>
+              <span>{t('common.or')}</span>
               <span>🎫 {PULL_COST_FRAGMENTS}</span>
             </div>
             <div className="pull-buttons">
@@ -258,23 +260,23 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                 onClick={() => handlePull(false)}
                 disabled={!canPullWithDiamonds || pulling}
               >
-                {pulling ? 'Pulling...' : `Pull with 💎 ${PULL_COST_DIAMONDS}`}
+                {pulling ? t('gacha.pulling') : `${t('gacha.pull')} 💎 ${PULL_COST_DIAMONDS}`}
               </button>
               <button
                 className="pull-button fragments"
                 onClick={() => handlePull(true)}
                 disabled={!canPullWithFragments || pulling}
               >
-                {pulling ? 'Pulling...' : `Pull with 🎫 ${PULL_COST_FRAGMENTS}`}
+                {pulling ? t('gacha.pulling') : `${t('gacha.pull')} 🎫 ${PULL_COST_FRAGMENTS}`}
               </button>
             </div>
           </div>
           
           <div className="pull-option">
-            <h3>10x Pull</h3>
+            <h3>{t('gacha.multiPull')}</h3>
             <div className="pull-cost">
               <span>💎 {MULTI_PULL_COST_DIAMONDS}</span>
-              <span className="multi-pull-bonus">(Save time!)</span>
+              <span className="multi-pull-bonus">({t('gacha.saveTime')})</span>
             </div>
             <div className="pull-buttons">
               <button
@@ -282,7 +284,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                 onClick={handleMultiPull}
                 disabled={!canMultiPull || pulling}
               >
-                {pulling ? 'Pulling...' : `10x Pull with 💎 ${MULTI_PULL_COST_DIAMONDS}`}
+                {pulling ? t('gacha.pulling') : `${t('gacha.multiPull')} 💎 ${MULTI_PULL_COST_DIAMONDS}`}
               </button>
             </div>
           </div>
@@ -300,7 +302,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
               }}
             >
               <h2>
-                {lastResult.duplicate ? '⭐ Duplicate!' : '🎉 New Captain!'}
+                {lastResult.duplicate ? `⭐ ${t('gacha.duplicateCaptain')}!` : `🎉 ${t('gacha.newCaptain')}`}
               </h2>
               <div className="rarity-badge" style={{ background: getRarityColor(lastResult.captain.rarity) }}>
                 {getRarityName(lastResult.captain.rarity)}
@@ -312,7 +314,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                 {lastResult.captain.portrait && typeof lastResult.captain.portrait === 'string' && lastResult.captain.portrait.startsWith('/') ? (
                   <img 
                     src={lastResult.captain.portrait} 
-                    alt={lastResult.captain.name}
+                    alt={t(`captains.items.${lastResult.captain.id}.name`, lastResult.captain.name)}
                     className="captain-portrait-image-gacha"
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -322,19 +324,19 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                   <span>{lastResult.captain.portrait || '👤'}</span>
                 )}
               </div>
-              <h3>{lastResult.captain.name}</h3>
-              <p className="captain-description">{lastResult.captain.description}</p>
-              <p className="captain-role">Role: {lastResult.captain.role}</p>
+              <h3>{t(`captains.items.${lastResult.captain.id}.name`, lastResult.captain.name)}</h3>
+              <p className="captain-description">{t(`captains.items.${lastResult.captain.id}.description`, lastResult.captain.description)}</p>
+              <p className="captain-role">{t('captains.captain')}: {t(`captains.${lastResult.captain.role}`, lastResult.captain.role)}</p>
               
               {lastResult.duplicate && (
                 <div className="duplicate-bonus">
-                  <p>⭐ You already own this captain!</p>
-                  <p>+50 XP bonus applied</p>
+                  <p>⭐ {t('gacha.youOwnThis')}</p>
+                  <p>+50 {t('captains.xp')} {t('gacha.bonusApplied')}</p>
                 </div>
               )}
               
               <div className="captain-buffs">
-                <h4>Buffs:</h4>
+                <h4>{t('captains.buffs')}:</h4>
                 {Object.keys(lastResult.captain.buffs).map(buff => (
                   <div key={buff} className="buff-item">
                     <span>{buff.replace(/([A-Z])/g, ' $1').trim()}:</span>
@@ -344,7 +346,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
               </div>
               
               <button className="close-result-button" onClick={() => setShowResult(false)}>
-                Close
+                {t('gacha.close')}
               </button>
             </div>
           </div>
@@ -355,32 +357,32 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
         <div className="gacha-result-overlay" onClick={() => setShowMultiResult(false)}>
           <div className="gacha-multi-result-modal" onClick={e => e.stopPropagation()}>
             <div className="multi-result-header">
-              <h2>🎉 10x Pull Results</h2>
+              <h2>🎉 {t('gacha.multiPullResults')}</h2>
               <button className="close-multi-button" onClick={() => setShowMultiResult(false)}>×</button>
             </div>
             
             <div className="multi-result-summary">
               <div className="summary-stats">
                 <div className="stat-item">
-                  <span className="stat-label">New Captains:</span>
+                  <span className="stat-label">{t('gacha.newCaptains')}:</span>
                   <span className="stat-value">
                     {multiPullResults.filter(r => !r.duplicate).length}
                   </span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">Duplicates:</span>
+                  <span className="stat-label">{t('gacha.duplicates')}:</span>
                   <span className="stat-value">
                     {multiPullResults.filter(r => r.duplicate).length}
                   </span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">Legendary:</span>
+                  <span className="stat-label">{t('captains.legendary')}:</span>
                   <span className="stat-value legendary">
                     {multiPullResults.filter(r => r.captain.rarity === CAPTAIN_RARITY.LEGENDARY).length}
                   </span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">Epic:</span>
+                  <span className="stat-label">{t('captains.epic')}:</span>
                   <span className="stat-value epic">
                     {multiPullResults.filter(r => r.captain.rarity === CAPTAIN_RARITY.EPIC).length}
                   </span>
@@ -389,7 +391,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             </div>
             
             <div className="multi-result-list">
-              <h3>All Results</h3>
+              <h3>{t('gacha.allResults')}</h3>
               <div className="results-grid">
                 {multiPullResults.map((result, index) => (
                   <div 
@@ -402,13 +404,13 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                   >
                     <div className="result-item-header">
                       <span className="pull-number">#{result.pullNumber}</span>
-                      {result.duplicate && <span className="duplicate-badge">⭐ Duplicate</span>}
+                      {result.duplicate && <span className="duplicate-badge">⭐ {t('gacha.duplicate')}</span>}
                     </div>
                     <div className="result-item-portrait">
                       {result.captain.portrait && typeof result.captain.portrait === 'string' && result.captain.portrait.startsWith('/') ? (
                         <img 
                           src={result.captain.portrait} 
-                          alt={result.captain.name}
+                          alt={t(`captains.items.${result.captain.id}.name`, result.captain.name)}
                           className="result-item-image"
                           onError={(e) => {
                             e.target.style.display = 'none';
@@ -418,7 +420,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
                         <span className="result-item-emoji">{result.captain.portrait || '👤'}</span>
                       )}
                     </div>
-                    <div className="result-item-name">{result.captain.name}</div>
+                    <div className="result-item-name">{t(`captains.items.${result.captain.id}.name`, result.captain.name)}</div>
                     <div 
                       className="result-item-rarity"
                       style={{ color: getRarityColor(result.captain.rarity) }}
@@ -431,7 +433,7 @@ export default function GachaSystem({ gameState, userId, onPullComplete }) {
             </div>
             
             <button className="close-result-button" onClick={() => setShowMultiResult(false)}>
-              Close
+              {t('gacha.close')}
             </button>
           </div>
         </div>

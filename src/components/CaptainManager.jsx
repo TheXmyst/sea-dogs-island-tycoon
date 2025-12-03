@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { getCaptainConfig, getXPForLevel, CAPTAIN_RARITY } from '../config/captains';
 import { getSkinsByType, getSkinConfig } from '../config/skins';
+import { useTranslation } from '../i18n/LanguageContext';
 import './CaptainManager.css';
 
 export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin }) {
+  const { t } = useTranslation();
   const [selectedCaptain, setSelectedCaptain] = useState(null);
   const [showSkinModal, setShowSkinModal] = useState(false);
   
@@ -22,7 +24,7 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
   };
   
   const getRarityName = (rarity) => {
-    return rarity.charAt(0).toUpperCase() + rarity.slice(1);
+    return t(`captains.${rarity}`, rarity.charAt(0).toUpperCase() + rarity.slice(1));
   };
   
   const getCaptainBuffs = (captain) => {
@@ -58,9 +60,9 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
     return (
       <div className="captain-manager">
         <div className="no-captains">
-          <h2>👥 Captain Collection</h2>
-          <p>You don't have any captains yet!</p>
-          <p>Go to the Recruitment tab to pull your first captain.</p>
+          <h2>👥 {t('captains.collection')}</h2>
+          <p>{t('captains.noCaptains')}</p>
+          <p>{t('captains.goToRecruitment')}</p>
         </div>
       </div>
     );
@@ -69,8 +71,8 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
   return (
     <div className="captain-manager">
       <div className="captain-manager-header">
-        <h2>👥 Captain Collection</h2>
-        <p>Manage your captains and their equipment</p>
+        <h2>👥 {t('captains.collection')}</h2>
+        <p>{t('captains.manage')}</p>
       </div>
       
       <div className="captains-grid">
@@ -118,20 +120,20 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                   )}
                 </div>
                 <div className="captain-info">
-                  <div className="captain-name">{config.name}</div>
+                  <div className="captain-name">{t(`captains.items.${captain.id}.name`, config.name)}</div>
                   <div 
                     className="captain-rarity"
                     style={{ color: getRarityColor(captain.rarity) }}
                   >
                     {getRarityName(captain.rarity)}
                   </div>
-                  <div className="captain-role">{config.role}</div>
+                  <div className="captain-role">{t(`captains.${config.role}`, config.role)}</div>
                 </div>
               </div>
               
               <div className="captain-level">
                 <div className="level-info">
-                  <span>Level {captain.level}</span>
+                  <span>{t('captains.level')} {captain.level}</span>
                   {canLevelUp && (
                     <button 
                       className="level-up-button"
@@ -140,7 +142,7 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                         handleLevelUp(captain);
                       }}
                     >
-                      Level Up!
+                      {t('captains.levelUp')}
                     </button>
                   )}
                 </div>
@@ -150,13 +152,13 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                     style={{ width: `${xpPercent}%` }}
                   />
                   <div className="xp-bar-text">
-                    {captain.xp} / {xpNeeded} XP
+                    {captain.xp} / {xpNeeded} {t('captains.xp')}
                   </div>
                 </div>
               </div>
               
               <div className="captain-buffs-preview">
-                <div className="buffs-label">Active Buffs:</div>
+                <div className="buffs-label">{t('captains.activeBuffs')}:</div>
                 <div className="buffs-list">
                   {Object.keys(buffs).slice(0, 3).map(buff => (
                     <div key={buff} className="buff-preview">
@@ -171,7 +173,7 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
               
               {captainSkins.length > 0 && (
                 <div className="captain-skins-count">
-                  {captainSkins.length} skin{captainSkins.length !== 1 ? 's' : ''} available
+                  {captainSkins.length} {t('captains.skinsAvailable', { count: captainSkins.length })}
                 </div>
               )}
             </div>
@@ -201,27 +203,27 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                   );
                 })()}
               </div>
-              <h2>{getCaptainConfig(selectedCaptain.id)?.name}</h2>
+              <h2>{t(`captains.items.${selectedCaptain.id}.name`, getCaptainConfig(selectedCaptain.id)?.name)}</h2>
               <div 
                 className="detail-rarity"
                 style={{ color: getRarityColor(selectedCaptain.rarity) }}
               >
-                {getRarityName(selectedCaptain.rarity)} • {selectedCaptain.role}
+                {getRarityName(selectedCaptain.rarity)} • {t(`captains.${selectedCaptain.role}`, selectedCaptain.role)}
               </div>
             </div>
             
             <div className="detail-body">
               <div className="detail-section">
-                <h3>Level & Experience</h3>
+                <h3>{t('captains.levelAndExperience')}</h3>
                 <div className="level-display">
-                  <div>Level {selectedCaptain.level}</div>
+                  <div>{t('captains.level')} {selectedCaptain.level}</div>
                   <div className="xp-bar-large">
                     <div 
                       className="xp-bar-fill"
                       style={{ width: `${(selectedCaptain.xp / getXPForLevel(selectedCaptain.level)) * 100}%` }}
                     />
                     <div className="xp-bar-text">
-                      {selectedCaptain.xp} / {getXPForLevel(selectedCaptain.level)} XP
+                      {selectedCaptain.xp} / {getXPForLevel(selectedCaptain.level)} {t('captains.xp')}
                     </div>
                   </div>
                   {selectedCaptain.xp >= getXPForLevel(selectedCaptain.level) && (
@@ -229,14 +231,14 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                       className="level-up-button-large"
                       onClick={() => handleLevelUp(selectedCaptain)}
                     >
-                      Level Up!
+                      {t('captains.levelUp')}
                     </button>
                   )}
                 </div>
               </div>
               
               <div className="detail-section">
-                <h3>Buffs & Bonuses</h3>
+                <h3>{t('captains.buffsAndBonuses')}</h3>
                 <div className="buffs-detail">
                   {Object.entries(getCaptainBuffs(selectedCaptain)).map(([buff, value]) => (
                     <div key={buff} className="buff-detail-item">
@@ -248,7 +250,7 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
               </div>
               
               <div className="detail-section">
-                <h3>Skins</h3>
+                <h3>{t('captains.skins')}</h3>
                 <div className="skins-section">
                   {(availableSkins[selectedCaptain.id] || []).length > 0 ? (
                     <div className="skins-list">
@@ -270,13 +272,13 @@ export default function CaptainManager({ gameState, onUpdateCaptain, onEquipSkin
                             <div className="skin-icon">{skin.icon}</div>
                             <div className="skin-name">{skin.name}</div>
                             <div className="skin-type">{skin.type}</div>
-                            {isActive && <div className="skin-active-badge">Active</div>}
+                            {isActive && <div className="skin-active-badge">{t('captains.active')}</div>}
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <p className="no-skins">No skins available for this captain.</p>
+                    <p className="no-skins">{t('captains.noSkins')}</p>
                   )}
                 </div>
               </div>

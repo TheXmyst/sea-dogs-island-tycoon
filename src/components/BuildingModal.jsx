@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { getBuildingConfig } from '../config/buildings';
 import { hasResources } from '../utils/gameState';
 import { getBuildingTechnologyBonus } from '../utils/technologyBuffs';
+import { useTranslation } from '../i18n/LanguageContext';
 import './BuildingModal.css';
 
 export default function BuildingModal({ building, gameState, onClose, onUpgrade }) {
+  const { t } = useTranslation();
   const config = getBuildingConfig(building.type);
   if (!config) return null;
   
@@ -69,14 +71,14 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2>{config.icon} {config.name}</h2>
-            <p className="modal-level">Level {currentLevel} / {maxLevel}</p>
+            <h2>{config.icon} {t(`buildings.items.${building.type}.name`, config.name)}</h2>
+            <p className="modal-level">{t('buildings.level')} {currentLevel} / {maxLevel}</p>
           </div>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         
         <div className="modal-body">
-          <p className="modal-description">{config.description}</p>
+          <p className="modal-description">{t(`buildings.items.${building.type}.description`, config.description)}</p>
           
           {building.isConstructing && progress !== null && (
             <div className="construction-progress">
@@ -87,13 +89,13 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
                 />
               </div>
               <div className="progress-text">
-                {Math.ceil((timer || 0) / 1000)}s remaining
+                {Math.ceil((timer || 0) / 1000)}s {t('buildings.remaining')}
               </div>
             </div>
           )}
           
           <div className="modal-section">
-            <h3>Current Production</h3>
+            <h3>{t('buildings.currentProduction')}</h3>
             <div className="production-list">
               {Object.keys(production).length > 0 ? (
                 <>
@@ -122,19 +124,19 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
                   )}
                 </>
               ) : (
-                <span className="no-production">No production</span>
+                <span className="no-production">{t('buildings.noProduction')}</span>
               )}
             </div>
           </div>
           
           {canUpgrade && (
             <div className="modal-section">
-              <h3>Upgrade to Level {currentLevel + 1}</h3>
+              <h3>{t('buildings.upgrade')} {t('buildings.level')} {currentLevel + 1}</h3>
               
               {nextProduction && Object.keys(nextProduction).length > 0 && (
                 <div className="upgrade-preview">
                   <div className="upgrade-production">
-                    <span>New Production:</span>
+                    <span>{t('buildings.nextProduction')}:</span>
                     {Object.keys(nextProduction).map(resource => {
                       const nextBaseValue = nextBaseProduction[resource] || 0;
                       const nextBonusValue = nextProduction[resource] - nextBaseValue;
@@ -158,7 +160,7 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
               )}
               
               <div className="upgrade-cost">
-                <span>Cost:</span>
+                <span>{t('buildings.cost')}:</span>
                 {Object.keys(upgradeCost).map(resource => (
                   <div key={resource} className={`cost-item ${gameState.resources[resource] >= upgradeCost[resource] ? '' : 'insufficient'}`}>
                     <span>{getResourceIcon(resource)}</span>
@@ -169,7 +171,7 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
               
               {buildTime && (
                 <div className="build-time">
-                  Build Time: {formatTime(buildTime)}
+                  {t('buildings.buildTime')}: {formatTime(buildTime)}
                 </div>
               )}
               
@@ -181,14 +183,14 @@ export default function BuildingModal({ building, gameState, onClose, onUpgrade 
                 }}
                 disabled={!canAffordUpgrade || building.isConstructing}
               >
-                Upgrade
+                {t('buildings.upgrade')}
               </button>
             </div>
           )}
           
           {!canUpgrade && (
             <div className="modal-section">
-              <p className="max-level">Building is at maximum level!</p>
+              <p className="max-level">{t('buildings.maxLevel')}</p>
             </div>
           )}
         </div>

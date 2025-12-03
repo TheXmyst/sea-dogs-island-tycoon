@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { CREW_TYPES, getCrewTypeConfig, CREW_TYPE } from '../config/crew';
 import { hasResources, deductResources } from '../utils/gameState';
 import { showSuccess, showError } from '../utils/notifications';
+import { useTranslation } from '../i18n/LanguageContext';
 import './CrewRecruitment.css';
 
 export default function CrewRecruitment({ gameState, onRecruitCrew }) {
+  const { t } = useTranslation();
   const [recruiting, setRecruiting] = useState({});
   
   const crew = gameState.crew || [];
@@ -16,7 +18,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
     if (!config) return;
     
     if (!hasCrewTraining) {
-      showError('Research "Crew Training" technology first!');
+      showError(t('crew.researchFirst'));
       return;
     }
     
@@ -26,7 +28,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
     };
     
     if (!hasResources(gameState.resources, totalCost)) {
-      showError('Insufficient resources!');
+      showError(t('crew.insufficientResources'));
       return;
     }
     
@@ -48,7 +50,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
         resources: deductResources(gameState.resources, totalCost),
       });
       
-      showSuccess(`Recruited ${count} ${config.name}${count > 1 ? 's' : ''}!`);
+      showSuccess(`${t('crew.recruited')} ${count} ${config.name}${count > 1 ? 's' : ''}!`);
       setRecruiting({ ...recruiting, [crewTypeId]: false });
     }, 500);
   };
@@ -61,9 +63,9 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
     return (
       <div className="crew-recruitment">
         <div className="tech-required">
-          <h2>👥 Crew Recruitment</h2>
-          <p>Research "Crew Training" technology to unlock specialized crew recruitment.</p>
-          <p>Go to the Technology Tree to research it!</p>
+          <h2>👥 {t('crew.recruitment')}</h2>
+          <p>{t('crew.researchCrewTraining')}</p>
+          <p>{t('crew.goToTechnology')}</p>
         </div>
       </div>
     );
@@ -72,25 +74,25 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
   return (
     <div className="crew-recruitment">
       <div className="crew-header">
-        <h2>👥 Crew Recruitment</h2>
-        <p>Recruit specialized crew members to enhance your ships</p>
+        <h2>👥 {t('crew.recruitment')}</h2>
+        <p>{t('crew.recruitSpecialized')}</p>
       </div>
       
       <div className="crew-stats">
         <div className="stat-card">
-          <div className="stat-label">Total Crew</div>
+          <div className="stat-label">{t('crew.totalCrew')}</div>
           <div className="stat-value">{crew.length}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Warriors</div>
+          <div className="stat-label">{t('crew.warriors')}</div>
           <div className="stat-value">{getCrewCount(CREW_TYPE.WARRIOR)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Archers</div>
+          <div className="stat-label">{t('crew.archers')}</div>
           <div className="stat-value">{getCrewCount(CREW_TYPE.ARCHER)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Hunters</div>
+          <div className="stat-label">{t('crew.hunters')}</div>
           <div className="stat-value">{getCrewCount(CREW_TYPE.HUNTER)}</div>
         </div>
       </div>
@@ -112,25 +114,25 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
               </div>
               
               <div className="crew-stats-info">
-                <h4>Individual Stats:</h4>
+                <h4>{t('crew.individualStats')}:</h4>
                 <div className="stats-grid">
                   <div className="stat-item">
-                    <span>⚔️ Attack:</span>
+                    <span>⚔️ {t('ships.attack')}:</span>
                     <span>{crewType.stats.attack}</span>
                   </div>
                   <div className="stat-item">
-                    <span>🛡️ Defense:</span>
+                    <span>🛡️ {t('ships.defense')}:</span>
                     <span>{crewType.stats.defense}</span>
                   </div>
                   <div className="stat-item">
-                    <span>❤️ HP:</span>
+                    <span>❤️ {t('ships.health')}:</span>
                     <span>{crewType.stats.hp}</span>
                   </div>
                 </div>
               </div>
               
               <div className="crew-bonuses">
-                <h4>Ship Bonuses (per crew member):</h4>
+                <h4>{t('crew.shipBonuses')}:</h4>
                 <div className="bonuses-list">
                   {Object.keys(crewType.shipBonus).map(bonus => (
                     <div key={bonus} className="bonus-item">
@@ -141,7 +143,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
               </div>
               
               <div className="crew-cost">
-                <span>Cost:</span>
+                <span>{t('buildings.cost')}:</span>
                 {Object.keys(crewType.cost).map(resource => (
                   <div key={resource} className={`cost-item ${gameState.resources[resource] >= crewType.cost[resource] ? '' : 'insufficient'}`}>
                     <span>{getResourceIcon(resource)}</span>
@@ -151,7 +153,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
               </div>
               
               <div className="crew-count">
-                Owned: {count}
+                {t('crew.owned')}: {count}
               </div>
               
               <div className="recruit-buttons">
@@ -160,7 +162,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
                   onClick={() => handleRecruit(crewType.id, 1)}
                   disabled={!canRecruit || isRecruiting}
                 >
-                  {isRecruiting ? 'Recruiting...' : 'Recruit 1'}
+                  {isRecruiting ? t('crew.recruiting') : t('crew.recruit1')}
                 </button>
                 <button
                   className="recruit-button multiple"
@@ -170,7 +172,7 @@ export default function CrewRecruitment({ gameState, onRecruitCrew }) {
                     rum: crewType.cost.rum * 5,
                   }) || isRecruiting}
                 >
-                  {isRecruiting ? 'Recruiting...' : 'Recruit 5'}
+                  {isRecruiting ? t('crew.recruiting') : t('crew.recruit5')}
                 </button>
               </div>
             </div>
