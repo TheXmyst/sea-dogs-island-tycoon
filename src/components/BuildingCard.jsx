@@ -2,6 +2,7 @@ import React from 'react';
 import { getBuildingConfig, checkPrerequisites } from '../config/buildings';
 import { hasResources } from '../utils/gameState';
 import { useTranslation } from '../i18n/LanguageContext';
+import BuildingSprite from './BuildingSprite';
 import './BuildingCard.css';
 
 export default function BuildingCard({ building, onClick, gameState }) {
@@ -20,7 +21,12 @@ export default function BuildingCard({ building, onClick, gameState }) {
       onClick={canBuild ? onClick : undefined}
     >
       <div className="building-card-header">
-        <span className="building-card-icon">{config.icon}</span>
+        <BuildingSprite
+          buildingId={building.id}
+          level={1}
+          icon={config.icon}
+          className="building-card-icon"
+        />
         <div>
           <div className="building-card-name">{t(`buildings.items.${building.id}.name`, config.name)}</div>
           <div className="building-card-description">{t(`buildings.items.${building.id}.description`, config.description)}</div>

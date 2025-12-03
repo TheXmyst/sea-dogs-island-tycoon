@@ -1,0 +1,43 @@
+.building-sprite-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.building-sprite-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated; /* Pour les sprites pixel art */
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.building-sprite-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: inherit;
+}
+
+/* Styles pour les différentes tailles */
+.zone-building-icon .building-sprite-image {
+  width: 32px;
+  height: 32px;
+}
+
+.building-card-icon .building-sprite-image {
+  width: 32px;
+  height: 32px;
+}
+
+/* Animation de transition entre niveaux */
+.building-sprite-image {
+  transition: opacity 0.3s ease;
+}
+
+.building-sprite-image[src=""] {
+  opacity: 0;
+}
+

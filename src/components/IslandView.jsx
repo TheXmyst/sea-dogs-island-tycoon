@@ -3,6 +3,7 @@ import { getBuildingPosition, BUILDING_POSITIONS } from '../config/islandLayout'
 import { getBuildingConfig } from '../config/buildings';
 import BuildingModal from './BuildingModal';
 import ConstructionMenu from './ConstructionMenu';
+import BuildingSprite from './BuildingSprite';
 import { debugAPI } from '../services/api';
 import { useTranslation } from '../i18n/LanguageContext';
 import './IslandView.css';
@@ -769,7 +770,12 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
               >
                 {isBuilt && (
                   <div className="zone-building-indicator">
-                    <div className="zone-building-icon">{config?.icon}</div>
+                    <BuildingSprite
+                      buildingId={buildingType}
+                      level={building.level}
+                      icon={config?.icon}
+                      className="zone-building-icon"
+                    />
                     <div className="zone-building-level">{t('buildings.level')}.{building.level}</div>
                     {building.isConstructing && (
                       <div className="zone-construction-overlay">
