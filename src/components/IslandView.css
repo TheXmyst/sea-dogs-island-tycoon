@@ -394,16 +394,11 @@
   font-size: 12px;
   color: var(--color-gold);
   font-weight: 600;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
   border-radius: 4px;
-  white-space: nowrap;
-  text-align: center;
-  margin-top: 220px; /* Positionnement en dessous du sprite (150px sprite + marge) */
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  position: relative;
+  top: 10.41%;
 }
 
 .zone-placement-indicator {
