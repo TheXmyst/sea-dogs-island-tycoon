@@ -12,8 +12,28 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const audioRef = useRef(null);
+  const hasStartedMusicRef = useRef(false);
 
-  // Démarrer la musique automatiquement comme sur la page de l'île
+  // Démarrer la musique au premier clic/interaction sur toute la page
+  const startMusic = () => {
+    if (hasStartedMusicRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    hasStartedMusicRef.current = true;
+    audio.volume = 0.7;
+    audio.loop = true;
+    
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.log('Erreur lecture musique:', error);
+        hasStartedMusicRef.current = false; // Réessayer au prochain clic
+      });
+    }
+  };
+
+  // Démarrer la musique automatiquement ou au premier clic/interaction
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -22,12 +42,29 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
     audio.volume = 0.7;
     audio.loop = true;
     
-    // Essayer de jouer automatiquement (comme sur la page de l'île)
+    // Essayer de jouer automatiquement
     const playPromise = audio.play();
     if (playPromise !== undefined) {
-      playPromise.catch(error => {
-        // La lecture automatique a été bloquée, l'utilisateur devra interagir
-        console.log('Lecture automatique bloquée:', error);
+      playPromise.then(() => {
+        hasStartedMusicRef.current = true;
+      }).catch(error => {
+        // La lecture automatique a été bloquée, démarrer au premier clic/interaction
+        console.log('Lecture automatique bloquée, attente interaction:', error);
+        
+        // Écouter les interactions sur toute la page (pas seulement le modal)
+        const handleInteraction = () => {
+          startMusic();
+          // Retirer les listeners après le premier démarrage
+          document.removeEventListener('click', handleInteraction);
+          document.removeEventListener('mousemove', handleInteraction);
+          document.removeEventListener('keydown', handleInteraction);
+          document.removeEventListener('touchstart', handleInteraction);
+        };
+        
+        document.addEventListener('click', handleInteraction, { once: true });
+        document.addEventListener('mousemove', handleInteraction, { once: true });
+        document.addEventListener('keydown', handleInteraction, { once: true });
+        document.addEventListener('touchstart', handleInteraction, { once: true });
       });
     }
     
