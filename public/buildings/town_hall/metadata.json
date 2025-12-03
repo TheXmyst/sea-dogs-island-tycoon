@@ -1,0 +1,38 @@
+{
+  "building_id": "town_hall",
+  "total_levels": 6,
+  "sprite_width": 341,
+  "sprite_height": 512,
+  "sprites": [
+    {
+      "level": 1,
+      "filename": "town_hall_level_01.png",
+      "path": "buildings/town_hall/town_hall_level_01.png"
+    },
+    {
+      "level": 2,
+      "filename": "town_hall_level_02.png",
+      "path": "buildings/town_hall/town_hall_level_02.png"
+    },
+    {
+      "level": 3,
+      "filename": "town_hall_level_03.png",
+      "path": "buildings/town_hall/town_hall_level_03.png"
+    },
+    {
+      "level": 4,
+      "filename": "town_hall_level_04.png",
+      "path": "buildings/town_hall/town_hall_level_04.png"
+    },
+    {
+      "level": 5,
+      "filename": "town_hall_level_05.png",
+      "path": "buildings/town_hall/town_hall_level_05.png"
+    },
+    {
+      "level": 6,
+      "filename": "town_hall_level_06.png",
+      "path": "buildings/town_hall/town_hall_level_06.png"
+    }
+  ]
+}

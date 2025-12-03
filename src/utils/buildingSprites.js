@@ -13,9 +13,35 @@ export function getBuildingSprite(buildingId, level) {
   // Niveau minimum 1, maximum 30
   const normalizedLevel = Math.max(1, Math.min(30, Math.floor(level)));
   
-  // Pour le Town Hall, on peut avoir jusqu'à 30 sprites différents
-  // Format: /buildings/{building_id}/level_{level:02d}.png
-  return `/buildings/${buildingId}/${buildingId}_level_${String(normalizedLevel).padStart(2, '0')}.png`;
+  // Mapping des niveaux aux sprites disponibles
+  // Si le bâtiment a moins de 30 sprites, on mappe les niveaux aux sprites disponibles
+  const spriteMapping = getSpriteMapping(buildingId, normalizedLevel);
+  
+  // Format: /buildings/{building_id}/level_{sprite_level:02d}.png
+  return `/buildings/${buildingId}/${buildingId}_level_${String(spriteMapping).padStart(2, '0')}.png`;
+}
+
+/**
+ * Mappe un niveau de bâtiment au sprite correspondant
+ * @param {string} buildingId - ID du bâtiment
+ * @param {number} level - Niveau du bâtiment (1-30)
+ * @returns {number} Numéro du sprite (1-6 pour town_hall)
+ */
+function getSpriteMapping(buildingId, level) {
+  // Pour le Town Hall, on a 6 sprites pour 30 niveaux
+  // Distribution: 5 niveaux par sprite
+  if (buildingId === 'town_hall') {
+    // Niveaux 1-5 → sprite 1
+    // Niveaux 6-10 → sprite 2
+    // Niveaux 11-15 → sprite 3
+    // Niveaux 16-20 → sprite 4
+    // Niveaux 21-25 → sprite 5
+    // Niveaux 26-30 → sprite 6
+    return Math.min(6, Math.ceil(level / 5));
+  }
+  
+  // Pour les autres bâtiments, on assume qu'ils ont un sprite par niveau
+  return level;
 }
 
 /**
@@ -26,8 +52,6 @@ export function getBuildingSprite(buildingId, level) {
  * @returns {string|object} Chemin du sprite ou icône
  */
 export function getBuildingSpriteWithFallback(buildingId, level, fallbackIcon = '🏛️') {
-  // Pour l'instant, on retourne l'icône par défaut
-  // Une fois les sprites extraits, on utilisera getBuildingSprite
   // Le composant BuildingSprite gère automatiquement le fallback
   return getBuildingSprite(buildingId, level);
 }
