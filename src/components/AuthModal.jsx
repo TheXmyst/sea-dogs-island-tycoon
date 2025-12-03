@@ -102,19 +102,26 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
     <div className="auth-modal-overlay" onClick={canClose ? onClose : undefined}>
       <audio
         ref={audioRef}
-        src="/music/title.mp3"
+        src={`${window.location.origin}/music/title.mp3`}
         loop
         preload="auto"
-        volume={0.7}
-        onLoadedData={() => {
-          console.log('Fichier audio chargé:', audioRef.current?.src);
+        onCanPlay={() => {
+          console.log('Fichier audio prêt à être joué:', audioRef.current?.src);
           // Essayer de démarrer après le chargement
           if (!musicStarted) {
             startMusic();
           }
         }}
+        onLoadedData={() => {
+          console.log('Fichier audio chargé avec succès');
+        }}
         onError={(e) => {
           console.error('Erreur de chargement audio:', e);
+          console.error('URL tentée:', audioRef.current?.src);
+          console.error('Code d\'erreur:', audioRef.current?.error?.code);
+        }}
+        onLoadStart={() => {
+          console.log('Début du chargement audio');
         }}
       />
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
