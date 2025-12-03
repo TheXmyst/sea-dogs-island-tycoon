@@ -4,19 +4,9 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "cleanUrls": true,
-  "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/music/:path*",
-      "destination": "/music/:path*"
-    },
-    {
-      "source": "/captains/:path*",
-      "destination": "/captains/:path*"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.(mp3|mp4|jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot|css|js|json|xml|txt|pdf|zip|webm|ogg|wav)).*)",
       "destination": "/index.html"
     }
   ],
