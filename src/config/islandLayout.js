@@ -22,8 +22,8 @@ export const BUILDING_POSITIONS = {
     y: 2,
     description: 'Center-north, near the large tree',
     zone: {
-      left: '52.87%',
-      top: '41.31%',
+      left: '44.54%',
+      top: '37.27%',
       width: '6%',
       height: '6%',
     },
