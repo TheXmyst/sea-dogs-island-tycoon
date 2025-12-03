@@ -776,7 +776,9 @@ export default function IslandView({ gameState, onBuild, onUpgrade, onOpenConstr
                       icon={config?.icon}
                       className="zone-building-icon"
                     />
-                    <div className="zone-building-level">{t('buildings.level')}.{building.level}</div>
+                    <div className="zone-building-level">
+                      {t(`buildings.items.${buildingType}.name`, config?.name)} - {t('buildings.level')} {building.level}
+                    </div>
                     {building.isConstructing && (
                       <div className="zone-construction-overlay">
                         <div className="zone-construction-text">{t('buildings.constructing')}</div>
