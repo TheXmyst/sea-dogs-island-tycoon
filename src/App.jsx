@@ -19,6 +19,7 @@ import CrewRecruitment from './components/CrewRecruitment';
 import Navigation from './components/Navigation';
 import ToastNotification from './components/ToastNotification';
 import AuthModal from './components/AuthModal';
+import SplashScreen from './components/SplashScreen';
 import Leaderboard from './components/Leaderboard';
 import SystemLog from './components/SystemLog';
 import DevTools from './components/DevTools';
@@ -56,6 +57,10 @@ export default function App() {
   const [username, setUsername] = useState(() => authAPI.getUsername());
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Afficher le splash screen seulement si pas encore vu dans cette session
+    return !sessionStorage.getItem('splashSeen');
+  });
   const audioRef = useRef(null);
   const hasLoadedFromServerRef = useRef(false); // Track if we've already loaded from server
   
@@ -1042,6 +1047,18 @@ export default function App() {
         return null;
     }
   };
+
+  // Afficher le splash screen si nécessaire
+  if (showSplash) {
+    return (
+      <SplashScreen 
+        onComplete={() => {
+          sessionStorage.setItem('splashSeen', 'true');
+          setShowSplash(false);
+        }} 
+      />
+    );
+  }
 
   // If not authenticated, show only auth modal (blocking)
   if (!isAuthenticated) {
