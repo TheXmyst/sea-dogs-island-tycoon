@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useTranslation } from '../i18n/LanguageContext';
 import './AuthModal.css';
@@ -12,55 +12,33 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const audioRef = useRef(null);
-  const hasStartedMusicRef = useRef(false);
 
-  // Démarrer la musique au premier clic/interaction
-  const startMusic = useCallback(() => {
-    if (hasStartedMusicRef.current) return;
+  // Démarrer la musique automatiquement comme sur la page de l'île
+  useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     
-    hasStartedMusicRef.current = true;
+    // Configurer la musique
     audio.volume = 0.7;
     audio.loop = true;
     
+    // Essayer de jouer automatiquement (comme sur la page de l'île)
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(error => {
-        console.log('Erreur lecture musique:', error);
-        hasStartedMusicRef.current = false; // Réessayer au prochain clic
+        // La lecture automatique a été bloquée, l'utilisateur devra interagir
+        console.log('Lecture automatique bloquée:', error);
       });
     }
-  }, []);
-
-  // Démarrer la musique au premier clic/interaction sur le modal
-  useEffect(() => {
-    const handleInteraction = () => {
-      startMusic();
-    };
-    
-    // Écouter les interactions sur le modal
-    const modal = document.querySelector('.auth-modal');
-    if (modal) {
-      modal.addEventListener('click', handleInteraction, { once: true });
-      modal.addEventListener('focus', handleInteraction, { once: true });
-    }
-    
-    // Écouter les interactions sur les inputs
-    const inputs = document.querySelectorAll('.auth-modal input');
-    inputs.forEach(input => {
-      input.addEventListener('focus', handleInteraction, { once: true });
-      input.addEventListener('click', handleInteraction, { once: true });
-    });
     
     // Arrêter la musique quand le composant se démonte
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
       }
     };
-  }, [startMusic]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
