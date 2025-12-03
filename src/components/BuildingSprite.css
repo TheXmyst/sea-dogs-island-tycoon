@@ -23,13 +23,17 @@
 
 /* Styles pour les différentes tailles */
 .zone-building-icon .building-sprite-image {
-  width: 32px;
-  height: 32px;
+  width: 150px;
+  height: auto;
+  min-height: 200px;
+  object-fit: contain;
 }
 
 .building-card-icon .building-sprite-image {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: auto;
+  min-height: 96px;
+  object-fit: contain;
 }
 
 /* Animation de transition entre niveaux */
