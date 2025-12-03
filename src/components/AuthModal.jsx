@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { showSuccess, showError } from '../utils/notifications';
 import { useTranslation } from '../i18n/LanguageContext';
 import './AuthModal.css';
@@ -11,25 +11,52 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [musicStarted, setMusicStarted] = useState(false);
   const audioRef = useRef(null);
+
+  // Fonction pour démarrer la musique
+  const startMusic = useCallback(() => {
+    if (audioRef.current && !musicStarted) {
+      audioRef.current.play().then(() => {
+        setMusicStarted(true);
+        console.log('Musique démarrée avec succès');
+      }).catch(error => {
+        console.log('Erreur lors du démarrage de la musique:', error);
+      });
+    }
+  }, [musicStarted]);
 
   // Démarrer la musique en boucle quand le composant se monte
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(error => {
-        // Ignorer les erreurs de lecture automatique (politique du navigateur)
-        console.log('Lecture automatique bloquée:', error);
-      });
-    }
+    // Essayer de démarrer immédiatement
+    const timer = setTimeout(() => {
+      startMusic();
+    }, 100);
+
+    // Démarrer la musique au premier clic/interaction
+    const handleUserInteraction = () => {
+      startMusic();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
     
     // Arrêter la musique quand le composant se démonte
     return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
     };
-  }, []);
+  }, [startMusic]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,6 +105,17 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
         src="/music/title.mp3"
         loop
         preload="auto"
+        volume={0.7}
+        onLoadedData={() => {
+          console.log('Fichier audio chargé:', audioRef.current?.src);
+          // Essayer de démarrer après le chargement
+          if (!musicStarted) {
+            startMusic();
+          }
+        }}
+        onError={(e) => {
+          console.error('Erreur de chargement audio:', e);
+        }}
       />
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         {canClose && <button className="auth-modal-close" onClick={onClose}>×</button>}
