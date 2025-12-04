@@ -29,6 +29,7 @@ export default function AnimatedSea({ width = 2000, height = 2000, className = '
         antialias: true,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
+        autoStart: true, // Démarrer le rendu automatiquement
       });
 
       if (!isMounted || !containerRef.current) {
@@ -42,30 +43,11 @@ export default function AnimatedSea({ width = 2000, height = 2000, className = '
     // Charger les textures depuis les images (ou générer si elles n'existent pas)
     const loadTextures = async () => {
       try {
-        // Essayer de charger les images depuis public/textures/
-        // Utiliser PIXI.Texture.from() qui est plus compatible
-        const rippleTexture = PIXI.Texture.from('/textures/ripple.png');
-        const bgTexture = PIXI.Texture.from('/textures/ocean-bg.png');
-        
-        // Attendre que les textures soient chargées
-        if (rippleTexture.baseTexture.valid && bgTexture.baseTexture.valid) {
-          console.log('✅ Textures HD chargées depuis /textures/');
-          return { rippleTexture, bgTexture };
-        } else {
-          // Attendre le chargement
-          await new Promise((resolve) => {
-            const checkLoaded = () => {
-              if (rippleTexture.baseTexture.valid && bgTexture.baseTexture.valid) {
-                console.log('✅ Textures HD chargées depuis /textures/');
-                resolve();
-              } else {
-                setTimeout(checkLoaded, 50);
-              }
-            };
-            checkLoaded();
-          });
-          return { rippleTexture, bgTexture };
-        }
+        // Pixi.js v8 - Utiliser Assets.load()
+        const rippleTexture = await PIXI.Assets.load('/textures/ripple.png');
+        const bgTexture = await PIXI.Assets.load('/textures/ocean-bg.png');
+        console.log('✅ Textures HD chargées depuis /textures/');
+        return { rippleTexture, bgTexture };
       } catch (error) {
         console.warn('⚠️ Textures non trouvées, génération programmatique...', error);
         // Fallback: générer les textures si les images n'existent pas
@@ -148,81 +130,106 @@ export default function AnimatedSea({ width = 2000, height = 2000, className = '
       return PIXI.Texture.from(canvas);
     };
 
-    // Charger les textures
-    const { rippleTexture, bgTexture } = await loadTextures();
+      // Charger les textures
+      const { rippleTexture, bgTexture } = await loadTextures();
 
-    const bg = new PIXI.Sprite(bgTexture);
-    
-    // Créer plusieurs ripples pour un effet plus naturel
-    const ripples = [];
-    const filters = [];
-    
-    // Créer 3 ripples à différentes positions
-    for (let i = 0; i < 3; i++) {
-      const ripple = new PIXI.Sprite(rippleTexture);
-      ripple.anchor.set(0.5);
+      if (!isMounted || !containerRef.current) {
+        app.destroy(true);
+        return;
+      }
+
+      const bg = new PIXI.Sprite(bgTexture);
       
-      // Positionner les ripples à différents endroits
-      ripple.x = (width / 4) + (i * width / 3);
-      ripple.y = (height / 4) + (i * height / 4);
-      ripple.scale.set(0.3);
-      ripple.alpha = 0.6;
+      // Créer plusieurs ripples pour un effet plus naturel
+      const ripples = [];
+      const filters = [];
       
-      // Créer un filtre pour chaque ripple
-      const filter = new PIXI.DisplacementFilter(ripple);
-      filter.scale.set(30 + i * 10); // Intensité variable
+      // Créer un container pour les ripples
+      const rippleContainer = new PIXI.Container();
       
-      ripples.push(ripple);
-      filters.push(filter);
+      // Créer 5 ripples à différentes positions pour un effet plus dynamique
+      for (let i = 0; i < 5; i++) {
+        const ripple = new PIXI.Sprite(rippleTexture);
+        ripple.anchor.set(0.5);
+        
+        // Positionner les ripples à différents endroits
+        ripple.x = (width / 6) + (i * width / 5);
+        ripple.y = (height / 6) + (i * height / 6);
+        ripple.scale.set(0.5);
+        ripple.alpha = 0.8;
+        
+        // Créer un filtre pour chaque ripple
+        const filter = new PIXI.DisplacementFilter(ripple);
+        filter.scale.set(50 + i * 20); // Intensité variable et plus forte
+        
+        ripples.push(ripple);
+        filters.push(filter);
+        
+        rippleContainer.addChild(ripple);
+      }
+
+      // Appliquer tous les filtres au background
+      bg.filters = filters;
+
+      // Ajouter le background au stage (en premier pour qu'il soit en arrière-plan)
+      app.stage.addChildAt(bg, 0);
+      app.stage.addChild(rippleContainer);
+
+      rippleSpriteRef.current = ripples;
+      filterRef.current = filters;
+
+      // Animer avec GSAP - animation continue et fluide
+      const timeline = gsap.timeline({ repeat: -1 });
       
-      app.stage.addChild(ripple);
-    }
+      // Animer chaque ripple indépendamment avec des délais différents
+      ripples.forEach((ripple, index) => {
+        const filter = filters[index];
+        const delay = index * 1.0; // Décalage pour chaque ripple
+        const duration = 6; // Durée fixe pour tous
+        
+        // Animation de l'échelle du ripple (expansion)
+        timeline.to(ripple.scale, {
+          x: 2.5,
+          y: 2.5,
+          duration: duration,
+          ease: 'none',
+        }, delay);
 
-    // Appliquer tous les filtres au background
-    bg.filters = filters;
+        // Animation de l'intensité du filtre (diminution progressive)
+        timeline.to(filter.scale, {
+          x: 0,
+          y: 0,
+          duration: duration,
+          ease: 'none',
+        }, delay);
 
-    // Ajouter le background au stage
-    app.stage.addChild(bg);
-
-    rippleSpriteRef.current = ripples;
-    filterRef.current = filters;
-
-    // Animer avec GSAP - animation continue et fluide
-    const timeline = gsap.timeline({ repeat: -1 });
-    
-    // Animer chaque ripple indépendamment
-    ripples.forEach((ripple, index) => {
-      const filter = filters[index];
-      const delay = index * 0.5; // Décalage pour chaque ripple
-      
-      // Animation de l'échelle du ripple
-      timeline.to(ripple.scale, {
-        x: 1.5 + index * 0.3,
-        y: 1.5 + index * 0.3,
-        duration: 4 + index * 0.5,
-        ease: 'none',
-      }, delay);
-
-      // Animation de l'intensité du filtre
-      timeline.to(filter.scale, {
-        x: 0,
-        y: 0,
-        duration: 4 + index * 0.5,
-        ease: 'none',
-      }, delay);
-
-      // Réinitialiser
-      timeline.set(ripple.scale, { 
-        x: 0.3, 
-        y: 0.3 
-      }, delay + 4 + index * 0.5);
-      timeline.set(filter.scale, { 
-        x: 30 + index * 10, 
-        y: 30 + index * 10 
-      }, delay + 4 + index * 0.5);
-    });
+        // Réinitialiser pour boucle infinie
+        timeline.set(ripple.scale, { 
+          x: 0.5, 
+          y: 0.5 
+        }, delay + duration);
+        timeline.set(filter.scale, { 
+          x: 50 + index * 20, 
+          y: 50 + index * 20 
+        }, delay + duration);
+      });
 
       animationRef.current = timeline;
+      
+      // Démarrer le rendu si ce n'est pas déjà fait
+      if (!app.ticker.started) {
+        app.start();
+      }
+      
+      // Ajouter un ticker pour s'assurer que l'animation se met à jour
+      app.ticker.add(() => {
+        // Le ticker de Pixi.js met à jour automatiquement le rendu
+      });
+      
+      console.log('🌊 Animation de la mer démarrée avec', ripples.length, 'ripples');
+      console.log('📊 Filtres appliqués:', filters.length);
+      console.log('🎨 Background sprite:', bg.width, 'x', bg.height);
+      console.log('🌀 Ripples positions:', ripples.map(r => ({ x: r.x, y: r.y })));
     };
 
     initSea();
