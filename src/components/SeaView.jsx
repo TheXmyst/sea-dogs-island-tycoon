@@ -22,6 +22,7 @@ export default function SeaView({ gameState, userId, selectedShip, isActive = tr
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const hasLoadedRef = useRef(false); // Pour éviter de recharger plusieurs fois
 
   // Calculate viewport dimensions
   const getViewportSize = useCallback(() => {
@@ -71,14 +72,16 @@ export default function SeaView({ gameState, userId, selectedShip, isActive = tr
       setPan(clampPan(centerPan, DEFAULT_ZOOM));
       setZoom(DEFAULT_ZOOM);
     }
-  }, [playerPosition, getViewportSize, clampPan]);
+  }, [playerPosition]);
 
   // Load player's sea assignment and map
   useEffect(() => {
+    // Éviter de recharger plusieurs fois
+    if (hasLoadedRef.current || !userId) return;
+    
     const loadSeaMap = async () => {
-      if (!userId) return;
-      
       try {
+        hasLoadedRef.current = true;
         setLoading(true);
         setError(null);
         
@@ -98,33 +101,46 @@ export default function SeaView({ gameState, userId, selectedShip, isActive = tr
         }
         
         setSeaMap(mapResult);
+        setLoading(false);
         
-        // Center view on player's island avec zoom par défaut
+        // Center view on player's island avec zoom par défaut (après le rendu)
         if (assignResult.position) {
           setTimeout(() => {
-            centerOnPlayerIsland();
-          }, 200);
+            const viewport = getViewportSize();
+            const centerPan = {
+              x: -assignResult.position.x * DEFAULT_ZOOM + viewport.width / 2,
+              y: -assignResult.position.y * DEFAULT_ZOOM + viewport.height / 2,
+            };
+            setPan(clampPan(centerPan, DEFAULT_ZOOM));
+            setZoom(DEFAULT_ZOOM);
+          }, 300);
         }
       } catch (err) {
         console.error('Load sea map error:', err);
         setError(err.message || 'Failed to load sea map');
-      } finally {
         setLoading(false);
+        hasLoadedRef.current = false; // Permettre de réessayer en cas d'erreur
       }
     };
     
     loadSeaMap();
-  }, [userId, centerOnPlayerIsland]);
+  }, [userId]);
 
-  // Recentrer quand la position du joueur change ou quand le composant devient actif
+  // Recentrer quand on devient actif (changement d'onglet)
   useEffect(() => {
-    if (playerPosition && isActive) {
+    if (isActive && playerPosition && !loading && seaMap) {
       // Petit délai pour s'assurer que le DOM est prêt
       setTimeout(() => {
-        centerOnPlayerIsland();
-      }, 100);
+        const viewport = getViewportSize();
+        const centerPan = {
+          x: -playerPosition.x * DEFAULT_ZOOM + viewport.width / 2,
+          y: -playerPosition.y * DEFAULT_ZOOM + viewport.height / 2,
+        };
+        setPan(clampPan(centerPan, DEFAULT_ZOOM));
+        setZoom(DEFAULT_ZOOM);
+      }, 150);
     }
-  }, [playerPosition, isActive, centerOnPlayerIsland]);
+  }, [isActive]); // Seulement quand isActive change, pas à chaque render
 
   const handleIslandClick = (island) => {
     if (island.playerId === userId) {
