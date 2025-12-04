@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { seaAPI } from '../services/api';
 import './SeaView.css';
+
+const MAP_WIDTH = 2000;
+const MAP_HEIGHT = 2000;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
 
 export default function SeaView({ gameState, userId, selectedShip }) {
   const [seaMap, setSeaMap] = useState(null);
@@ -11,6 +16,36 @@ export default function SeaView({ gameState, userId, selectedShip }) {
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+
+  // Calculate viewport dimensions
+  const getViewportSize = useCallback(() => {
+    if (!containerRef.current) {
+      return { width: window.innerWidth, height: window.innerHeight - 100 };
+    }
+    const rect = containerRef.current.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  }, []);
+
+  // Clamp pan to stay within map boundaries
+  const clampPan = useCallback((newPan, currentZoom) => {
+    const viewport = getViewportSize();
+    const scaledMapWidth = MAP_WIDTH * currentZoom;
+    const scaledMapHeight = MAP_HEIGHT * currentZoom;
+    
+    const maxPanX = 0;
+    const minPanX = viewport.width - scaledMapWidth;
+    const maxPanY = 0;
+    const minPanY = viewport.height - scaledMapHeight;
+    
+    return {
+      x: Math.max(minPanX, Math.min(maxPanX, newPan.x)),
+      y: Math.max(minPanY, Math.min(maxPanY, newPan.y)),
+    };
+  }, [getViewportSize]);
 
   // Load player's sea assignment and map
   useEffect(() => {
@@ -38,12 +73,16 @@ export default function SeaView({ gameState, userId, selectedShip }) {
         
         setSeaMap(mapResult);
         
-        // Center view on player's island
+        // Center view on player's island (will be clamped after render)
         if (assignResult.position) {
-          setPan({
-            x: -assignResult.position.x + window.innerWidth / 2,
-            y: -assignResult.position.y + window.innerHeight / 2,
-          });
+          setTimeout(() => {
+            const viewport = getViewportSize();
+            const initialPan = {
+              x: -assignResult.position.x * 1 + viewport.width / 2,
+              y: -assignResult.position.y * 1 + viewport.height / 2,
+            };
+            setPan(clampPan(initialPan, 1));
+          }, 100);
         }
       } catch (err) {
         console.error('Load sea map error:', err);
@@ -54,7 +93,7 @@ export default function SeaView({ gameState, userId, selectedShip }) {
     };
     
     loadSeaMap();
-  }, [userId]);
+  }, [userId, getViewportSize, clampPan]);
 
   const handleIslandClick = (island) => {
     if (island.playerId === userId) {
@@ -84,9 +123,79 @@ export default function SeaView({ gameState, userId, selectedShip }) {
     alert(`Navigation to ${selectedTarget.type} not yet implemented`);
   };
 
-  const handleZoom = (delta) => {
-    setZoom(prev => Math.max(0.5, Math.min(3, prev + delta)));
-  };
+  // Handle zoom with limits
+  const handleZoom = useCallback((delta, centerX = null, centerY = null) => {
+    setZoom(prevZoom => {
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prevZoom + delta));
+      
+      // If zooming at a specific point, adjust pan to keep that point under cursor
+      if (centerX !== null && centerY !== null && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const relativeX = centerX - rect.left;
+        const relativeY = centerY - rect.top;
+        
+        // Get current pan state
+        setPan(prevPan => {
+          // Calculate the world position at the cursor
+          const worldX = (relativeX - prevPan.x) / prevZoom;
+          const worldY = (relativeY - prevPan.y) / prevZoom;
+          
+          // Calculate new pan to keep world position under cursor
+          const newPanX = relativeX - worldX * newZoom;
+          const newPanY = relativeY - worldY * newZoom;
+          
+          return clampPan({ x: newPanX, y: newPanY }, newZoom);
+        });
+      } else {
+        // Just clamp the current pan with new zoom
+        setPan(prevPan => clampPan(prevPan, newZoom));
+      }
+      
+      return newZoom;
+    });
+  }, [clampPan]);
+
+  // Handle drag start
+  const handleMouseDown = useCallback((e) => {
+    if (e.button !== 0) return; // Only left mouse button
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setPanStart({ ...pan });
+    e.preventDefault();
+  }, [pan]);
+
+  // Handle drag
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    
+    const newPan = {
+      x: panStart.x + deltaX,
+      y: panStart.y + deltaY,
+    };
+    
+    setPan(clampPan(newPan, zoom));
+    e.preventDefault();
+  }, [isDragging, dragStart, panStart, zoom, clampPan]);
+
+  // Handle drag end
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Handle wheel zoom
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    handleZoom(delta, e.clientX, e.clientY);
+  }, [handleZoom]);
+
+  // Update pan when zoom changes to keep it clamped
+  useEffect(() => {
+    setPan(prevPan => clampPan(prevPan, zoom));
+  }, [zoom, clampPan]);
 
   if (loading) {
     return (
@@ -134,25 +243,30 @@ export default function SeaView({ gameState, userId, selectedShip }) {
       </div>
 
       <div className="sea-controls">
-        <button onClick={() => handleZoom(0.1)}>🔍+</button>
-        <button onClick={() => handleZoom(-0.1)}>🔍-</button>
+        <button onClick={() => handleZoom(0.1)} disabled={zoom >= MAX_ZOOM}>🔍+</button>
+        <button onClick={() => handleZoom(-0.1)} disabled={zoom <= MIN_ZOOM}>🔍-</button>
         <button onClick={() => {
           if (playerPosition) {
-            setPan({
-              x: -playerPosition.x + window.innerWidth / 2,
-              y: -playerPosition.y + window.innerHeight / 2,
-            });
+            const viewport = getViewportSize();
+            const centerPan = {
+              x: -playerPosition.x * zoom + viewport.width / 2,
+              y: -playerPosition.y * zoom + viewport.height / 2,
+            };
+            setPan(clampPan(centerPan, zoom));
             setZoom(1);
           }
         }}>📍 Center</button>
+        <div className="zoom-indicator">{Math.round(zoom * 100)}%</div>
       </div>
 
       <div 
-        className="sea-map-container"
-        onWheel={(e) => {
-          e.preventDefault();
-          handleZoom(e.deltaY > 0 ? -0.1 : 0.1);
-        }}
+        ref={containerRef}
+        className={`sea-map-container ${isDragging ? 'dragging' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
       >
         <div 
           className="sea-map"
