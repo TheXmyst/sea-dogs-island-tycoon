@@ -274,23 +274,6 @@ export default function SeaView({ gameState, userId, selectedShip }) {
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           }}
         >
-          {/* Animated bubbles */}
-          <div className="sea-bubbles">
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div
-                key={i}
-                className="bubble"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  width: `${10 + Math.random() * 20}px`,
-                  height: `${10 + Math.random() * 20}px`,
-                  animationDelay: `${Math.random() * 8}s`,
-                  animationDuration: `${6 + Math.random() * 4}s`,
-                }}
-              />
-            ))}
-          </div>
-
           {/* Render islands */}
           {seaMap.islands.map((island) => {
             const isPlayerIsland = island.playerId === userId;

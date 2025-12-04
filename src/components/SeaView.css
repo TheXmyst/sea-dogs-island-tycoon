@@ -3,7 +3,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%);
+  /* Fond pour la vue du dessus - ciel bleu pâle vu d'en haut */
+  background: linear-gradient(180deg, #87ceeb 0%, #b0e0e6 30%, #4682b4 100%);
   position: relative;
   overflow: hidden;
 }
@@ -122,17 +123,25 @@
   width: 2000px;
   height: 2000px;
   position: relative;
-  /* Vue du dessus - océan vu d'en haut avec variations de profondeur */
+  /* Vue du dessus - océan réaliste vu d'en haut (vue aérienne) */
   background: 
-    radial-gradient(circle at 30% 40%, rgba(13, 71, 161, 0.8) 0%, transparent 30%),
-    radial-gradient(circle at 70% 60%, rgba(26, 35, 126, 0.9) 0%, transparent 35%),
-    radial-gradient(circle at 50% 50%, rgba(1, 87, 155, 0.7) 0%, transparent 40%),
-    linear-gradient(135deg, #0d47a1 0%, #1a237e 25%, #01579b 50%, #1a237e 75%, #0d47a1 100%);
+    /* Variations de profondeur - zones plus profondes (plus sombres) */
+    radial-gradient(ellipse 800px 600px at 20% 30%, #0a3d91 0%, transparent 40%),
+    radial-gradient(ellipse 700px 500px at 80% 70%, #0d47a1 0%, transparent 35%),
+    radial-gradient(ellipse 900px 700px at 50% 50%, #1565c0 0%, transparent 45%),
+    radial-gradient(ellipse 600px 800px at 10% 80%, #0d47a1 0%, transparent 38%),
+    radial-gradient(ellipse 750px 550px at 90% 20%, #1a237e 0%, transparent 42%),
+    /* Zones moins profondes (plus claires) - récifs, bancs de sable */
+    radial-gradient(ellipse 400px 300px at 35% 25%, #1e88e5 0%, transparent 30%),
+    radial-gradient(ellipse 350px 400px at 65% 75%, #1976d2 0%, transparent 32%),
+    /* Fond de base - océan moyen */
+    linear-gradient(135deg, #1565c0 0%, #0d47a1 20%, #1a237e 40%, #0d47a1 60%, #1565c0 80%, #0d47a1 100%);
   transform-origin: 0 0;
   overflow: hidden;
+  box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.1);
 }
 
-/* Animated ocean waves using CSS - vue du dessus */
+/* Animated ocean waves using CSS - vue du dessus réaliste (vue aérienne) */
 .sea-map::before {
   content: '';
   position: absolute;
@@ -141,28 +150,62 @@
   width: 100%;
   height: 100%;
   background: 
-    /* Vagues subtiles vues du dessus - motifs circulaires */
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.03) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-    /* Motifs de vagues légers */
+    /* Reflets de lumière du soleil sur l'eau (vue aérienne) */
+    radial-gradient(ellipse 600px 400px at 30% 25%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 15%, transparent 30%),
+    radial-gradient(ellipse 500px 350px at 70% 60%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 12%, transparent 28%),
+    radial-gradient(ellipse 400px 300px at 50% 40%, rgba(255, 255, 255, 0.12) 0%, transparent 25%),
+    /* Motifs de vagues vus du dessus - cercles concentriques (ondulations) */
+    repeating-radial-gradient(
+      circle at 20% 30%,
+      transparent 0px,
+      transparent 80px,
+      rgba(255, 255, 255, 0.04) 80px,
+      rgba(255, 255, 255, 0.04) 82px,
+      transparent 82px,
+      transparent 160px
+    ),
+    repeating-radial-gradient(
+      circle at 80% 70%,
+      transparent 0px,
+      transparent 100px,
+      rgba(255, 255, 255, 0.03) 100px,
+      rgba(255, 255, 255, 0.03) 102px,
+      transparent 102px,
+      transparent 200px
+    ),
+    /* Motifs de vagues en lignes (créées par le vent) - vue aérienne */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 200px,
+      rgba(255, 255, 255, 0.025) 200px,
+      rgba(255, 255, 255, 0.025) 202px,
+      transparent 202px,
+      transparent 400px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 250px,
+      rgba(255, 255, 255, 0.02) 250px,
+      rgba(255, 255, 255, 0.02) 252px,
+      transparent 252px,
+      transparent 500px
+    ),
+    /* Motifs de vagues perpendiculaires */
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 100px,
-      rgba(255, 255, 255, 0.02) 100px,
-      rgba(255, 255, 255, 0.02) 200px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 100px,
-      rgba(255, 255, 255, 0.02) 100px,
-      rgba(255, 255, 255, 0.02) 200px
+      transparent 180px,
+      rgba(255, 255, 255, 0.015) 180px,
+      rgba(255, 255, 255, 0.015) 182px,
+      transparent 182px,
+      transparent 360px
     );
-  animation: waveAnimation 25s linear infinite;
+  animation: waveAnimation 35s linear infinite;
   pointer-events: none;
   z-index: 0;
+  mix-blend-mode: overlay;
 }
 
 .sea-map::after {
@@ -172,90 +215,66 @@
   left: 0;
   width: 100%;
   height: 100%;
+  /* Variations de profondeur et reflets supplémentaires - vue aérienne */
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
-  animation: shimmerAnimation 15s ease-in-out infinite;
+    /* Zones plus profondes (plus sombres) - fosses océaniques */
+    radial-gradient(ellipse 600px 500px at 15% 45%, rgba(0, 0, 0, 0.15) 0%, transparent 45%),
+    radial-gradient(ellipse 550px 600px at 85% 55%, rgba(0, 0, 0, 0.12) 0%, transparent 50%),
+    /* Zones moins profondes (plus claires) - hauts-fonds */
+    radial-gradient(ellipse 500px 400px at 40% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 38%),
+    radial-gradient(ellipse 450px 500px at 60% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 42%),
+    /* Reflets de lumière animés du soleil */
+    radial-gradient(ellipse 400px 300px at 35% 15%, rgba(255, 255, 255, 0.15) 0%, transparent 28%),
+    radial-gradient(ellipse 350px 250px at 65% 25%, rgba(255, 255, 255, 0.12) 0%, transparent 25%);
+  animation: shimmerAnimation 25s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
+  mix-blend-mode: soft-light;
 }
 
 @keyframes waveAnimation {
   0% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 0.6;
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 1;
   }
-  33% {
-    transform: translateX(-30px) translateY(-15px) scale(1.05);
-    opacity: 0.7;
+  25% {
+    transform: translateX(-20px) translateY(-10px) rotate(1deg);
+    opacity: 0.95;
   }
-  66% {
-    transform: translateX(30px) translateY(15px) scale(0.95);
-    opacity: 0.6;
+  50% {
+    transform: translateX(20px) translateY(10px) rotate(-1deg);
+    opacity: 0.9;
+  }
+  75% {
+    transform: translateX(-15px) translateY(5px) rotate(0.5deg);
+    opacity: 0.95;
   }
   100% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 0.6;
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 1;
   }
 }
 
 @keyframes shimmerAnimation {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
-
-/* Floating bubbles animation */
-.sea-bubbles {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.bubble {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  animation: bubbleFloat 8s infinite ease-in-out;
-  opacity: 0;
-}
-
-.bubble::before {
-  content: '';
-  position: absolute;
-  width: 30%;
-  height: 30%;
-  top: 20%;
-  left: 20%;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-}
-
-@keyframes bubbleFloat {
   0% {
-    transform: translateY(100vh) translateX(0);
-    opacity: 0;
+    opacity: 0.4;
+    transform: translateX(0) translateY(0) scale(1);
   }
-  10% {
+  33% {
     opacity: 0.6;
+    transform: translateX(30px) translateY(-20px) scale(1.05);
   }
-  90% {
-    opacity: 0.6;
+  66% {
+    opacity: 0.5;
+    transform: translateX(-25px) translateY(15px) scale(0.98);
   }
   100% {
-    transform: translateY(-100px) translateX(50px);
-    opacity: 0;
+    opacity: 0.4;
+    transform: translateX(0) translateY(0) scale(1);
   }
 }
+
+/* Suppression des bulles - pas de sens en vue du dessus */
 
 .island-marker {
   position: absolute;
