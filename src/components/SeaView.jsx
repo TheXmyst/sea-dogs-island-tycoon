@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { seaAPI } from '../services/api';
+import AnimatedSea from './AnimatedSea';
 import './SeaView.css';
 
 const MAP_WIDTH = 2000;
@@ -268,6 +269,17 @@ export default function SeaView({ gameState, userId, selectedShip }) {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       >
+        {/* Mer animée avec Pixi.js en arrière-plan */}
+        <div 
+          className="animated-sea-wrapper"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: '0 0',
+          }}
+        >
+          <AnimatedSea width={MAP_WIDTH} height={MAP_HEIGHT} />
+        </div>
+
         <div 
           className="sea-map"
           style={{

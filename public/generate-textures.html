@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Textures Mer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        canvas {
+            border: 2px solid #444;
+            margin: 10px;
+            background: #000;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌊 Générateur de Textures Mer HD</h1>
+        <div class="info">
+            <p>1. Cliquez sur "Générer Ripple" pour créer la texture d'ondulation</p>
+            <p>2. Cliquez sur "Générer Fond Océan" pour créer la texture de fond</p>
+            <p>3. Clic droit sur chaque image → "Enregistrer l'image sous..."</p>
+            <p>4. Sauvegardez dans <code>public/textures/</code></p>
+        </div>
+
+        <div>
+            <h2>Texture Ripple (Ondulation)</h2>
+            <button onclick="generateRipple()">Générer Ripple</button>
+            <button onclick="downloadRipple()">Télécharger ripple.png</button>
+            <canvas id="rippleCanvas" width="512" height="512"></canvas>
+        </div>
+
+        <div>
+            <h2>Texture Fond Océan</h2>
+            <button onclick="generateOcean()">Générer Fond Océan</button>
+            <button onclick="downloadOcean()">Télécharger ocean-bg.png</button>
+            <canvas id="oceanCanvas" width="2048" height="2048"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function generateRipple() {
+            const canvas = document.getElementById('rippleCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = 512;
+            const centerX = size / 2;
+            const centerY = size / 2;
+
+            // Fond transparent
+            ctx.clearRect(0, 0, size, size);
+
+            // Créer des cercles concentriques pour l'effet de ripple HD
+            for (let i = 0; i < 10; i++) {
+                const radius = (size / 10) * (i + 1);
+                const alpha = 0.5 - (i * 0.05);
+                
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius * 0.7,
+                    centerX, centerY, radius
+                );
+                
+                gradient.addColorStop(0, `rgba(128, 180, 255, ${alpha})`);
+                gradient.addColorStop(0.5, `rgba(128, 180, 255, ${alpha * 0.6})`);
+                gradient.addColorStop(1, 'rgba(128, 180, 255, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Détails supplémentaires pour un effet plus réaliste
+            for (let i = 0; i < 16; i++) {
+                const angle = (Math.PI * 2 / 16) * i;
+                const distance = size * 0.35;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+                const radius = 25 + Math.random() * 20;
+
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            window.rippleCanvas = canvas;
+        }
+
+        function generateOcean() {
+            const canvas = document.getElementById('oceanCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 2048;
+            const height = 2048;
+
+            // Fond de base avec gradient HD
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#1565c0');
+            gradient.addColorStop(0.25, '#0d47a1');
+            gradient.addColorStop(0.5, '#1a237e');
+            gradient.addColorStop(0.75, '#0d47a1');
+            gradient.addColorStop(1, '#1565c0');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Variations de profondeur (zones plus profondes - plus sombres)
+            for (let i = 0; i < 15; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = 350 + Math.random() * 450;
+                const alpha = 0.15 + Math.random() * 0.1;
+
+                const radialGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                radialGradient.addColorStop(0, `rgba(0, 0, 0, ${alpha})`);
+                radialGradient.addColorStop(0.7, `rgba(0, 0, 0, ${alpha * 0.5})`);
+                radialGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = radialGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Zones moins profondes (plus claires - hauts-fonds)
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = 250 + Math.random() * 300;
+                const alpha = 0.12 + Math.random() * 0.1;
+
+                const radialGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                radialGradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+                radialGradient.addColorStop(0.7, `rgba(255, 255, 255, ${alpha * 0.5})`);
+                radialGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.fillStyle = radialGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Motifs de vagues subtils (vue du dessus)
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * width;
+                const y = Math.random() * height;
+                const radius = 180 + Math.random() * 120;
+                const alpha = 0.04 + Math.random() * 0.03;
+
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            window.oceanCanvas = canvas;
+        }
+
+        function downloadRipple() {
+            if (!window.rippleCanvas) {
+                alert('Générez d\'abord la texture ripple!');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'ripple.png';
+            link.href = window.rippleCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadOcean() {
+            if (!window.oceanCanvas) {
+                alert('Générez d\'abord la texture océan!');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'ocean-bg.png';
+            link.href = window.oceanCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Générer automatiquement au chargement
+        window.onload = () => {
+            generateRipple();
+            generateOcean();
+        };
+    </script>
+</body>
+</html>
+
