@@ -118,7 +118,7 @@ export default function AuthModal({ onLogin, onRegister, onClose, canClose = tru
   };
 
   return (
-    <div className="auth-modal-overlay" onClick={canClose ? onClose : undefined}>
+    <div className={`auth-modal-overlay ${!isLogin ? 'auth-modal-register' : ''}`} onClick={canClose ? onClose : undefined}>
       <audio
         ref={audioRef}
         src="/music/title.mp3"
