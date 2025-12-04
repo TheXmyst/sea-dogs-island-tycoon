@@ -6,16 +6,17 @@ import './SeaView.css';
 const MAP_WIDTH = 2000;
 const MAP_HEIGHT = 2000;
 const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2;
+const MAX_ZOOM = 3; // Augmenté pour plus de zoom
+const DEFAULT_ZOOM = 1.8; // Zoom par défaut plus fort
 
-export default function SeaView({ gameState, userId, selectedShip }) {
+export default function SeaView({ gameState, userId, selectedShip, isActive = true }) {
   const [seaMap, setSeaMap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [playerSeaId, setPlayerSeaId] = useState(null);
   const [playerPosition, setPlayerPosition] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -48,6 +49,30 @@ export default function SeaView({ gameState, userId, selectedShip }) {
     };
   }, [getViewportSize]);
 
+  // Désactiver le scroll de la page quand on est sur l'onglet Sea
+  useEffect(() => {
+    // Désactiver le scroll
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      // Réactiver le scroll quand on quitte l'onglet
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  // Centrer sur l'île du joueur quand le composant est monté ou quand la position change
+  const centerOnPlayerIsland = useCallback(() => {
+    if (playerPosition && containerRef.current) {
+      const viewport = getViewportSize();
+      const centerPan = {
+        x: -playerPosition.x * DEFAULT_ZOOM + viewport.width / 2,
+        y: -playerPosition.y * DEFAULT_ZOOM + viewport.height / 2,
+      };
+      setPan(clampPan(centerPan, DEFAULT_ZOOM));
+      setZoom(DEFAULT_ZOOM);
+    }
+  }, [playerPosition, getViewportSize, clampPan]);
+
   // Load player's sea assignment and map
   useEffect(() => {
     const loadSeaMap = async () => {
@@ -74,16 +99,11 @@ export default function SeaView({ gameState, userId, selectedShip }) {
         
         setSeaMap(mapResult);
         
-        // Center view on player's island (will be clamped after render)
+        // Center view on player's island avec zoom par défaut
         if (assignResult.position) {
           setTimeout(() => {
-            const viewport = getViewportSize();
-            const initialPan = {
-              x: -assignResult.position.x * 1 + viewport.width / 2,
-              y: -assignResult.position.y * 1 + viewport.height / 2,
-            };
-            setPan(clampPan(initialPan, 1));
-          }, 100);
+            centerOnPlayerIsland();
+          }, 200);
         }
       } catch (err) {
         console.error('Load sea map error:', err);
@@ -94,7 +114,17 @@ export default function SeaView({ gameState, userId, selectedShip }) {
     };
     
     loadSeaMap();
-  }, [userId, getViewportSize, clampPan]);
+  }, [userId, centerOnPlayerIsland]);
+
+  // Recentrer quand la position du joueur change ou quand le composant devient actif
+  useEffect(() => {
+    if (playerPosition && isActive) {
+      // Petit délai pour s'assurer que le DOM est prêt
+      setTimeout(() => {
+        centerOnPlayerIsland();
+      }, 100);
+    }
+  }, [playerPosition, isActive, centerOnPlayerIsland]);
 
   const handleIslandClick = (island) => {
     if (island.playerId === userId) {
@@ -247,15 +277,7 @@ export default function SeaView({ gameState, userId, selectedShip }) {
         <button onClick={() => handleZoom(0.1)} disabled={zoom >= MAX_ZOOM}>🔍+</button>
         <button onClick={() => handleZoom(-0.1)} disabled={zoom <= MIN_ZOOM}>🔍-</button>
         <button onClick={() => {
-          if (playerPosition) {
-            const viewport = getViewportSize();
-            const centerPan = {
-              x: -playerPosition.x * zoom + viewport.width / 2,
-              y: -playerPosition.y * zoom + viewport.height / 2,
-            };
-            setPan(clampPan(centerPan, zoom));
-            setZoom(1);
-          }
+          centerOnPlayerIsland();
         }}>📍 Center</button>
         <div className="zoom-indicator">{Math.round(zoom * 100)}%</div>
       </div>

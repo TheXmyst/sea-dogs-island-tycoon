@@ -178,53 +178,60 @@ export default function AnimatedSea({ width = 2000, height = 2000, className = '
       rippleSpriteRef.current = ripples;
       filterRef.current = filters;
 
-      // Animer avec GSAP - animation continue et fluide
-      const timeline = gsap.timeline({ repeat: -1 });
-      
-      // Animer chaque ripple indépendamment avec des délais différents
-      ripples.forEach((ripple, index) => {
-        const filter = filters[index];
-        const delay = index * 1.0; // Décalage pour chaque ripple
-        const duration = 6; // Durée fixe pour tous
-        
-        // Animation de l'échelle du ripple (expansion)
-        timeline.to(ripple.scale, {
-          x: 2.5,
-          y: 2.5,
-          duration: duration,
-          ease: 'none',
-        }, delay);
+      // Animer avec le ticker de Pixi.js (plus fiable que GSAP pour Pixi)
+      const rippleData = ripples.map((ripple, index) => ({
+        ripple,
+        filter: filters[index],
+        startScale: 0.5,
+        endScale: 2.5,
+        startFilterScale: 50 + index * 20,
+        endFilterScale: 0,
+        duration: 6000 + index * 1000, // 6-10 secondes
+        elapsed: index * 1000, // Décalage initial
+        direction: 1, // 1 = expansion, -1 = contraction
+      }));
 
-        // Animation de l'intensité du filtre (diminution progressive)
-        timeline.to(filter.scale, {
-          x: 0,
-          y: 0,
-          duration: duration,
-          ease: 'none',
-        }, delay);
+      // Fonction d'animation dans le ticker
+      const animateRipples = (deltaTime) => {
+        rippleData.forEach((data) => {
+          data.elapsed += deltaTime * 16.67; // Convertir en ms approximatif
+          
+          if (data.elapsed >= data.duration) {
+            // Réinitialiser
+            data.elapsed = 0;
+            data.direction *= -1; // Inverser la direction
+          }
+          
+          const progress = data.elapsed / data.duration;
+          const easedProgress = progress; // Linear pour l'instant
+          
+          if (data.direction === 1) {
+            // Expansion
+            const currentScale = data.startScale + (data.endScale - data.startScale) * easedProgress;
+            const currentFilterScale = data.startFilterScale + (data.endFilterScale - data.startFilterScale) * easedProgress;
+            
+            data.ripple.scale.set(currentScale);
+            data.filter.scale.set(currentFilterScale);
+          } else {
+            // Contraction (retour)
+            const currentScale = data.endScale - (data.endScale - data.startScale) * easedProgress;
+            const currentFilterScale = data.endFilterScale - (data.endFilterScale - data.startFilterScale) * easedProgress;
+            
+            data.ripple.scale.set(currentScale);
+            data.filter.scale.set(currentFilterScale);
+          }
+        });
+      };
 
-        // Réinitialiser pour boucle infinie
-        timeline.set(ripple.scale, { 
-          x: 0.5, 
-          y: 0.5 
-        }, delay + duration);
-        timeline.set(filter.scale, { 
-          x: 50 + index * 20, 
-          y: 50 + index * 20 
-        }, delay + duration);
-      });
-
-      animationRef.current = timeline;
+      // Ajouter l'animation au ticker
+      app.ticker.add(animateRipples);
       
       // Démarrer le rendu si ce n'est pas déjà fait
       if (!app.ticker.started) {
         app.start();
       }
       
-      // Ajouter un ticker pour s'assurer que l'animation se met à jour
-      app.ticker.add(() => {
-        // Le ticker de Pixi.js met à jour automatiquement le rendu
-      });
+      animationRef.current = { kill: () => app.ticker.remove(animateRipples) };
       
       console.log('🌊 Animation de la mer démarrée avec', ripples.length, 'ripples');
       console.log('📊 Filtres appliqués:', filters.length);

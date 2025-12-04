@@ -109,6 +109,9 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
+  /* Empêcher le scroll de la page */
+  touch-action: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .animated-sea-wrapper {

@@ -1029,6 +1029,7 @@ export default function App() {
             gameState={gameState}
             userId={userId}
             selectedShip={selectedShip}
+            isActive={currentTab === TABS.SEA}
           />
         );
       case TABS.ALLIANCE:
